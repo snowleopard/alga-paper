@@ -107,13 +107,13 @@ The paper presents a minimalistic, elegant and powerful approach to working
 with graphs in a functional programming language. The approach is built on
 a rigorous mathematical foundation --- an algebra of graphs --- that allows
 to apply equational reasoning for proving the correctness of graph transformation
-algorithms. A distinctive feature of the presented approach compared to the
+algorithms. One useful feature of the presented approach compared to the
 state-of-the-art graph libraries is that it allows to avoid partial functions on
 graphs, which are typically required for handling `malformed graphs' that contain an
 edge referring to a non-existent vertex. Algebraic graphs make it impossible to
 specify such malformed graphs, thereby solving this issue at the root.
 
-The basic version of the algebra corresponds to unlabelled directed graphs.
+The basic definition of algebraic graphs corresponds to unlabelled directed graphs.
 We show that by introducing additional axioms to the algebra, it is possible to also
 represent undirected, reflexive, transitively closed, and labelled graphs.
 We derive basic graph transformation algorithms that are polymorphic and can
@@ -126,23 +126,22 @@ algebraic graphs by a few examples.
 \begin{CCSXML}
 <ccs2012>
 <concept>
-<concept_id>10011007.10011006.10011008</concept_id>
-<concept_desc>Software and its engineering~General programming languages</concept_desc>
+<concept_id>10002950.10003624.10003633</concept_id>
+<concept_desc>Mathematics of computing~Graph theory</concept_desc>
 <concept_significance>500</concept_significance>
 </concept>
 <concept>
-<concept_id>10003456.10003457.10003521.10003525</concept_id>
-<concept_desc>Social and professional topics~History of programming languages</concept_desc>
-<concept_significance>300</concept_significance>
+<concept_id>10003752.10010124.10010125.10010127</concept_id>
+<concept_desc>Theory of computation~Functional constructs</concept_desc>
+<concept_significance>500</concept_significance>
 </concept>
 </ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{Software and its engineering~General programming languages}
-\ccsdesc[300]{Social and professional topics~History of programming languages}
-%% End of generated code
+\ccsdesc[500]{Mathematics of computing~Graph theory}
+\ccsdesc[500]{Theory of computation~Functional constructs}%% End of generated code
 
-\keywords{algebra, graph, polymorphism}  %% \keywords is optional
+\keywords{algebra, graph, polymorphism, functional programming}
 
 %% Note: \maketitle command must come after title commands, author
 %% commands, abstract environment, Computing Classification System
@@ -152,6 +151,29 @@ algebraic graphs by a few examples.
 \section{Introduction}
 
 Text of paper \ldots
+
+Focus not on graph algorithms, but more on convenient graph specification/transformation language.
+
+"Unlike traditional approaches
+based on mutable references or node/edge lists, well-formedness of
+the graph structure is ensured statically and reasoning can be done
+with standard functional programming techniques."
+
+\section{Related work\label{sec-related}}
+
+In this section we review existing approaches to working with graphs developed
+by the functional programming community.
+
+\begin{itemize}
+    \item Tying the knot:
+    \item Borrowing imperative algorithms via the State monad.
+    \item Data.Graph by King & Launchbury, 1995. \url{https://galois.com/wp-content/uploads/2014/08/pub_JL_StructuringDFSAlgorithms.pdf}.
+    Clever tricks exploiting lazy evaluation (Johnsson 1998) \url{https://pdfs.semanticscholar.org/a6ed/4e55f148e0c48445269990102838f7d7abb5.pdf?_ga=1.176470501.1134931652.1487554701}
+
+    \item Inductive Graphs by Martin Erwig, 2001. \url{https://web.engr.oregonstate.edu/~erwig/papers/InductiveGraphs_JFP01.pdf}
+    \item Structured Graphs by Oliveira & Cook. \url{https://www.cs.utexas.edu/~wcook/Drafts/2012/graphs.pdf}
+    \item An initial-algebra approach to directed acyclic graphs, by J. Gibbons
+\end{itemize}
 
 
 %% Acknowledgments
