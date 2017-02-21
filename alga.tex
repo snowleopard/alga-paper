@@ -10,6 +10,7 @@
                         %% http://ctan.org/pkg/booktabs
 \usepackage{subcaption} %% For complex figures with subfigures/subcaptions
                         %% http://ctan.org/pkg/subcaption
+\usepackage{minted}
 
 \makeatletter\if@ACM@journal\makeatother
 %% Journal information (used by PACMPL format)
@@ -110,7 +111,7 @@ algorithms. One useful feature of the presented approach compared to the
 state-of-the-art graph libraries is that it allows to avoid partial functions on
 graphs, which are typically required for handling `malformed graphs' that contain an
 edge referring to a non-existent vertex. Algebraic graphs make it impossible to
-specify such malformed graphs, thereby solving this issue at the root.
+specify such malformed graphs, thereby eliminating the need for partial functions.
 
 The basic definition of algebraic graphs corresponds to unlabelled directed graphs.
 We show that by introducing additional axioms to the algebra, it is possible to also
@@ -151,13 +152,65 @@ algebraic graphs by a few examples.
 
 Graphs are ubiquitous in computing, yet working with graphs still requires
 painfully low-level fiddling with lists of vertices and edges. As a motivating
-example, we look at two popular Haskell\footnote{In this paper
+example, we look at two popular Haskell graph libraries\footnote{In this paper
 we exclusively use Haskell, but the presented approach can be adapted to
-other functional programming languages.} graph libraries. The first
-one is available from the \textsf{containers} package and is an implementation
-of the approach by King and Launchbury~\citeyear{1995_king_graphs}, and
-the second one is the \textsf{fgl} library, which is built on the work by
-Martin Erwig~\citeyear{2001_erwig_inductive}.
+other functional programming languages.}. The first one is available from the
+\textbf{\textsf{containers}} package and uses adjacency arrays to represent graphs,
+as described by King and Launchbury~\citeyear{1995_king_graphs}. The second one
+is the \textbf{\textsf{fgl}} library, which is based on \emph{inductive graphs}
+by Martin Erwig~\citeyear{2001_erwig_inductive}. Both libraries are
+actively maintained, have many users, and provide efficient implementations for
+commonly used graph algorithms, such as depth-first search.
+
+\begin{figure}
+\begin{subfigure}[b]{0.33\linewidth}
+\begin{minted}[fontsize=\small]{haskell}
+import Data.Graph
+
+g :: Graph
+g = buildG (1,2) [(1,2)]
+
+h :: Graph
+h = buildG (1,2) [(1,2), (2,3)]
+
+-- OK
+transposeG g
+
+-- Exception: index out of range
+transposeG h
+\end{minted}
+\caption{containers library}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.33\linewidth}
+\begin{minted}[fontsize=\small]{haskell}
+import Data.Graph.Inductive
+
+g :: Graph
+g = buildG (1,2) [(1,2)]
+
+h :: Graph
+h = buildG (1,2) [(1,2), (2,3)]
+\end{minted}
+\caption{fgl library}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.33\linewidth}
+\begin{minted}[fontsize=\small]{haskell}
+import Algebra.Graph
+
+g :: Graph
+g = buildG (1,2) [(1,2)]
+
+h :: Graph
+h = buildG (1,2) [(1,2), (2,3)]
+\end{minted}
+\caption{This paper}
+\end{subfigure}
+
+\end{figure}
+
+
 
 % Focus not on graph algorithms, but more on convenient graph
 % specification/transformation language.
