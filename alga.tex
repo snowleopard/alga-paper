@@ -42,7 +42,6 @@
 %\setcopyright{rightsretained}
 %\copyrightyear{2017}           %% If different from \acmYear
 
-
 \bibliographystyle{ACM-Reference-Format}
 \citestyle{acmauthoryear}   %% For author/year citations
 
@@ -150,14 +149,32 @@ algebraic graphs by a few examples.
 
 \section{Introduction}
 
-Text of paper \ldots
+Graphs are ubiquitous in computing, yet working with graphs still requires
+painfully low-level fiddling with lists of vertices and edges. As a motivating
+example, we look at two popular Haskell\footnote{In this paper
+we exclusively use Haskell, but the presented approach can be adapted to
+other functional programming languages.} graph libraries. The first
+one is available from the \textsf{containers} package and is an implementation
+of the approach by King and Launchbury~\citeyear{1995_king_graphs}, and
+the second one is the \textsf{fgl} library, which is built on the work by
+Martin Erwig~\citeyear{2001_erwig_inductive}.
 
-Focus not on graph algorithms, but more on convenient graph specification/transformation language.
+% Focus not on graph algorithms, but more on convenient graph
+% specification/transformation language.
 
-"Unlike traditional approaches
-based on mutable references or node/edge lists, well-formedness of
-the graph structure is ensured statically and reasoning can be done
-with standard functional programming techniques."
+% "Unlike traditional approaches
+% based on mutable references or node/edge lists, well-formedness of
+% the graph structure is ensured statically and reasoning can be done
+% with standard functional programming techniques."
+
+
+\section{Algebraic structure\label{sec-algebra}}
+
+\section{Graphs a la carte\label{sec-a-la-carte}}
+
+\section{Graphs transformations\label{sec-transformations}}
+
+\section{Applications\label{sec-applications}}
 
 \section{Related work\label{sec-related}}
 
@@ -193,11 +210,8 @@ by the functional programming community.
   National Science Foundation.
 \end{acks}
 
-%% Bibliography
-%\bibliography{bibfile}
+\bibliography{publications}
 
-
-%% Appendix
 \appendix
 \section{Appendix}
 
