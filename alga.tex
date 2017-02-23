@@ -201,11 +201,11 @@ to create graph~$a$ we call the \hs{mkUGraph} method, which is similar to
 awkward case when the sets of vertices and edges are inconsistent; instead of
 failing with an error, \textsf{fgl} chooses to ignore edges adjacent to non-existent
 vertices, hence \hs{mkUGraph [] [(1,2)]} creates the empty graph. To construct
-graph~$b$, we first add the vertex 3 and then add the edge $3 \rightarrow 1$. If
-we skip the first step, \textsf{fgl} fails with the
+graph~$b$, we first add the vertex 3 to $a$ and then add the edge $3 \rightarrow 1$.
+If we skip the first step, \hs{insEdge} fails with the
 \textsf{`edge from non-existent vertex'} error.
 Note that \textsf{fgl} is optimised for working with labelled graphs, which requires
-using the dummy labels \hs{()} for vertices and edges when working with unlabelled
+using the dummy label \hs{()} for vertices and edges when working with unlabelled
 graphs. Graph~$c$ is obtained in a straightforward way by calling the \hs{delNode}
 function. As one can see, the resulting expression is still polymorphic, admitting
 multiple possible implementations. The default implementation of the \hs{DynGraph}
