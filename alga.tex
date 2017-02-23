@@ -10,8 +10,10 @@
                         %% http://ctan.org/pkg/booktabs
 \usepackage{subcaption} %% For complex figures with subfigures/subcaptions
                         %% http://ctan.org/pkg/subcaption
+% Haskell code snippets
 \usepackage{minted}
 \newcommand{\hs}{\mintinline{haskell}}
+\newcommand{\teq}{\smaller $\sim$}
 
 \makeatletter\if@ACM@journal\makeatother
 %% Journal information (used by PACMPL format)
@@ -221,12 +223,12 @@ import Data.Graph
 a :: Graph
 a = buildG (1,2) [(1,2)]
 
--- Add edge 3 --> 1
+-- Add edge 3 --> 1 to a
 b :: Graph
 b = buildG (1,3) $
     edges a ++ [(3,1)]
 
--- Remove vertex 2 (almost)
+-- Remove vertex 2 from b
 c :: Graph
 c = buildG (1,3) $ filter
     (not . adj 2) (edges b)
@@ -237,6 +239,7 @@ c = buildG (1,3) $ filter
 \vrule
 \hfill
 \hfill
+\hfill
 \begin{subfigure}[b]{0.3\linewidth}
 \begin{minted}[fontsize=\small,escapeinside=@@]{haskell}
 import Data.Graph.Inductive
@@ -245,12 +248,12 @@ import Data.Graph.Inductive
 a :: Graph gr => gr () ()
 a = mkUGraph [1,2] [(1,2)]
 
--- Add edge 3 --> 1
+-- Add edge 3 --> 1 to a
 b :: DynGraph gr => gr () ()
 b = insEdge (3,1,()) $
     insNode (3,()) a
 
--- Remove vertex 2
+-- Remove vertex 2 from b
 c :: DynGraph gr => gr () ()
 c = delNode 2 b
 @ @
@@ -266,23 +269,22 @@ c = delNode 2 b
 import Algebra.Graph
 
 -- Create graph 1 --> 2
-a :: (Graph g, Num (Vertex g)) => g
+a :: (Graph g, Vertex g @\teq@ Int) => g
 a = connect (vertex 1) (vertex 2)
 
--- Add edge 3 --> 1
-b :: (Graph g, Num (Vertex g)) => g
+-- Add edge 3 --> 1 to a
+b :: (Graph g, Vertex g @\teq@ Int) => g
 b = overlay a $
     connect (vertex 3) (vertex 1)
 
--- Remove vertex 2
-c :: (Graph g, Num (Vertex g)
-             , Eq  (Vertex g)) => g
+-- Remove vertex 2 from b
+c :: (Graph g, Vertex g @\teq@ Int) => g
 c = removeVertex 2 b
+@ @
 \end{minted}
 \caption{Algebraic graphs}
 \end{subfigure}
-\caption{Simple transformations of unlabelled graphs (type signatures are
-as inferred by GHC 8.0)\label{fig-example}}
+\caption{Simple transformations of unlabelled directed graphs\label{fig-example}}
 \vspace{-4mm}
 \end{figure}
 
@@ -292,18 +294,19 @@ Fig.~\ref{fig-example}(c) intentionally avoids helper library functions (apart
 from \hs{removeVertex}), performing the intended graph transformations using the
 bare-metal primitives of the algebra. Graph~$a$ is constructed by \emph{connecting}
 vertices 1 and 2. This definition has no hidden partiality or ambiguity.
-The type signature tells us that the graph's vertices can be of any numeric type,
-not fixed to \hs{Int} as in the \textsf{containers} and \textsf{fgl} libraries.
+Unlike the \textsf{containers} and \textsf{fgl} libraries, the type of vertices
+is not fixed to \hs{Int}, e.g. we could have used \hs{Integer} instead.
 Graph~$b$ is constructed by \emph{overlaying} $a$ with the edge $3 \rightarrow 1$.
-Vertex 2 is removed as in \textsf{fgl}, but the type signature picks up the
-\hs{Eq (Vertex g)} constraint -- to remove a vertex we need a way to distinguish
-it from others. We argue that the algebraic interface is superior, because it
+To remove the vertex 2 in $c$ we use the polymorphic library function
+\hs{removeVertex} that essentially replaces the vertex with the \hs{empty} graph,
+as explained in \S\ref{sec-transformations}.
+We argue that the algebraic interface is superior, because it
 abstracts away such details as sets of vertices and edges.
 
 The main idea of this paper is that the proposed minimalistic core of four graph
 construction primitives provides a safe and flexible algebraic interface
-for working with graphs, and also unlocks a new world of graph instances, which
-contains classic inhabitants from \textsf{containers} and \textsf{fgl}, as well
+for working with graphs, and also unlocks a new world of graph instances, with
+classic inhabitants from \textsf{containers} and \textsf{fgl}, as well
 as new, unknown forms of life.
 
 Our main contributions are:
