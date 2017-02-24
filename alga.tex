@@ -10,10 +10,12 @@
                         %% http://ctan.org/pkg/booktabs
 \usepackage{subcaption} %% For complex figures with subfigures/subcaptions
                         %% http://ctan.org/pkg/subcaption
-% Haskell code snippets
+
+% Haskell code snippets and useful shortcuts
 \usepackage{minted}
 \newcommand{\hs}{\mintinline{haskell}}
 \newcommand{\teq}{\smaller $\sim$}
+\newcommand{\defeq}{\stackrel{\text{def}}{=}}
 
 \makeatletter\if@ACM@journal\makeatother
 %% Journal information (used by PACMPL format)
@@ -352,16 +354,98 @@ for working with graphs, and also unlocks a new world of graph instances, with
 classic inhabitants from \textsf{containers} and \textsf{fgl}, as well
 as new, unknown forms of life.
 
-% Focus not on graph algorithms, but more on convenient graph
-% specification/transformation language.
-
-% "Unlike traditional approaches
-% based on mutable references or node/edge lists, well-formedness of
-% the graph structure is ensured statically and reasoning can be done
-% with standard functional programming techniques."
-
-
 \section{The core}\label{sec-core}
+
+In this section we define the \emph{core} of algebraic graphs -- a minimal set
+of graph construction primitives that are compositional and total. The core is
+built on the \emph{algebra of parameterised graphs}, a mathematical formalism
+proposed by Mokhov and Khomenko~\citeyear{2014_algebra_mokhov} for formal
+modelling of hardware systems, which we distil and adapt to the context of
+graph representation in functional programming languages.
+
+Let $G$ be a set of unlabelled directed graphs whose vertices come from a fixed
+universe $\mathbb{V}$. As an example, we can think of graphs whose vertices are
+positive integers. A graph $g \in G$ can be represented by a pair $(V, E)$ where
+$V\subseteq \mathbb{V}$ is the set of its vertices and $E \subseteq V \times V$ is
+the set of its edges.
+The constraint on $E$ means that not every pair $(V, E)$ corresponds to a graph,
+which leads to the partiality
+of many graph interfaces, as discussed in \S\ref{sec-motivation}.
+
+When one needs to guarantee the internal consistency of a data structure, such
+as the pair $(V, E)$, the standard solution is to define an abstract interface
+that encapsulates the data structure and provides a set of safe construction
+primitives. This is exactly the approach we take in this paper.
+
+\subsection{Constructing graphs}\label{sub-constructing}
+
+The simplest possible graph is the \emph{empty} graph. We will denote it by
+$\varepsilon$, therefore $\varepsilon = (\varnothing, \varnothing)$ and
+$\varepsilon \in G$. A graph with a \emph{single vertex} $v \in \mathbb{V}$
+will be denoted simply by $v$. For example, $1 \in G$ is the graph
+$({1}, \varnothing)$.
+
+To construct larger graphs from the above primitives we define two binary
+operations \emph{overlay} and \emph{connect}, denoted by $+$ and $\rightarrow$,
+respectively\footnote{The operations of overlay and connect are also known
+as the \emph{graph union} and the \emph{graph join} in the literature,
+e.g see Harary~\citeyear{1969_graph_theory_harary},
+however their arguments are typically assumed to have disjoint sets of vertices.
+We make no such assumptions, therefore any two graphs can be composed using the
+overlay and connect operations.}. The overlay $+$ of two graphs is defined as
+\[
+(V_1, E_1) + (V_2, E_2)~~\defeq~~(V_1 \cup V_2, E_1 \cup E_2).
+\]
+That is, the overlay of two graphs comprises the union of their vertices and edges.
+
+The connect $\rightarrow$ operation is defined in a similar manner:
+\[
+(V_1, E_1) \rightarrow (V_2, E_2)~~\defeq~~(V_1 \cup V_2, E_1 \cup E_2 \cup V_1 \times V_2).
+\]
+The difference is that when we connect two graphs, an edge is added from each
+vertex in the left-hand argument to each vertex in the right-hand argument.
+Note that the connect operation is the only source of edges when constructing
+graphs. As we will see in \S\ref{sec-algebra}, the overlay and connect are very
+similar to addition and multiplication, therefore connect has a higher
+precedence, i.e. $1 + 2 \rightarrow 3$ is interpreted as $1 + (2 \rightarrow 3)$.
+
+Here are a few examples:
+\begin{itemize}
+  \item $1 + 2$ is the graph with two isolated vertices 1 and 2.
+  \item $1 \rightarrow 2$ is the graph with an edge between vertices 1
+  and 2, i.e. the graph $a$ from Fig.~\ref{fig-example}.
+  \item $1 \rightarrow (2 + 3)$ is the graph with three vertices $\{1, 2, 3\}$
+  and two edges $(1, 2)$ and $(1, 3)$.
+  \item $1 \rightarrow 1$ is the graph with vertex 1 and the \emph{self-loop}
+  going from the vertex to itself.
+  \item $1 \rightarrow 2 + 3 \rightarrow 1$ is the graph $b$ from
+  Fig.~\ref{fig-example}.
+\end{itemize}
+
+\subsection{Type class}
+
+We abstract the graph construction primitives defined in \S\ref{sub-constructing}
+as the type class \hs{Graph}:
+
+\vspace{1mm}
+\begin{minted}{haskell}
+class Graph g where
+    type Vertex g
+    empty   :: g
+    vertex  :: Vertex g -> g
+    overlay :: g -> g -> g
+    connect :: g -> g -> g
+\end{minted}
+\vspace{1mm}
+
+\noindent
+Here the \emph{associated type}\footnote{Associated
+types~\cite{2005_associated_type_chakravarty} require the \textsf{TypeFamilies}
+GHC extension.} \hs{Vertex g} corresponds to the universe of graph
+vertices $\mathbb{V}$, the \hs{empty} method constructs the empty graph
+$\varepsilon$, the \hs{vertex} method creates a graph with a single vertex,
+and \hs{overlay} and \hs{connect} compose given graphs according to
+the definitions in~\S\ref{sub-constructing}.
 
 \section{Algebraic structure}\label{sec-algebra}
 
@@ -391,6 +475,8 @@ as new, unknown forms of life.
 \section{Discussion and future work}\label{sec-discussion}
 
 % Using discrimination library for better efficiency
+% Modular decomposition for minimisation
+% Solving graph equations
 
 
 %% Acknowledgments
