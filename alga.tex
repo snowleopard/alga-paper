@@ -153,45 +153,49 @@ and transformation of polymorphic graphs.
 \section{Introduction}
 
 Graphs are ubiquitous in computing, yet working with graphs often requires
-painfully low-level fiddling with sets of vertices and edges. We demonstrate this
+painfully low-level fiddling with sets of vertices and edges. We highlight this
 in the motivation section~\S\ref{sec-motivation} by examining the APIs of
 two state-of-the-art Haskell graph libraries\footnote{In this paper we exclusively
 use Haskell, but the presented approach can be adapted to other functional
 programming languages.}. To address this problem, we present
 \emph{algebraic graphs} --- a new interface for graph construction and
-transformation, which is the main contribution this paper (see \S\ref{sec-class}).
-Compared to existing libraries,
-the interface is more compositional (hence greater code reuse), has no partial
-functions (hence fewer opportunities for usage errors), and is fully
-characterised by a set of simple algebraic laws (hence easier for testing
-and formal verification). The mathematical structure of algebraic graphs
-is analysed in \S\ref{sec-algebra}.
+transformation. Our specific contributions are:
 
-The proposed interface has a minimalistic core comprising only four graph
-construction primitives. This core is \emph{complete}, i.e. any graph can
-be constructed, and \emph{sound}, i.e. malformed graphs cannot be constructed.
-Under the basic set of axioms, algebraic graphs correspond to unlabelled directed
-graphs. As we show in \S\ref{sec-a-la-carte}, by extending the algebra with
-additional axioms, it is possible to also represent undirected, reflexive,
-transitively closed, and labelled graphs. Importantly, the core graph
-construction primitives remain unchanged, which allows to define highly
-reusable polymorphic functions on graphs.
+\begin{itemize}
+  \item Compared to existing libraries, algebraic graphs have a smaller
+  \emph{core} (just four graph construction primitives), are more compositional
+  (hence greater code reuse), and have no partial functions (hence fewer
+  opportunities for usage errors). We present the core and justify these claims
+  in \S\ref{sec-core}.
 
-To substantiate our claims, in
-\S\ref{sec-transformations} we develop a library of polymorphic graph
-construction and transformation primitives and demonstrate its power on a
-few examples. Although the development of asymptotically optimal algorithms for
-algebraic graphs is outside the scope of this work, we show that
-vanilla non-optimised functions described in this paper can cope with graphs
-comprising millions of vertices and billions of edges in the matter of seconds,
-which is fast enough for many real-life applications. We give two examples
-of such applications in \S\ref{sec-applications}.
+  \item The core has a simple mathematical structure and is fully characterised
+  by a set of algebraic laws described in~\S\ref{sec-algebra}, which makes the
+  proposed interface easier for testing and formal verification. We show that
+  the core is \emph{complete}, i.e. any graph can be constructed, and \emph{sound},
+  i.e. malformed graphs cannot be constructed.
+
+  \item Under the basic set of axioms, algebraic graphs correspond to unlabelled
+  directed graphs. As we show in~\S\ref{sec-a-la-carte}, by extending the algebra
+  with additional axioms, it is possible to also represent undirected, reflexive,
+  transitively closed, and labelled graphs. Importantly, the core graph
+  construction primitives remain unchanged, which allows to define highly
+  reusable polymorphic functions on graphs.
+
+  \item We develop a library of polymorphic graph construction and
+  transformation functions on top of the algebraic core and demonstrate its
+  flexibility in \S\ref{sec-transformations}.
+  Although the development of asymptotically optimal algorithms for algebraic
+  graphs is outside the scope of this paper, we show that the library can cope
+  with graphs comprising millions of vertices and billions of edges in the
+  matter of seconds, which is sufficiently fast for many real-life applications.
+  We give two examples of such applications in \S\ref{sec-applications}.
+\end{itemize}
 
 Graphs and functional programming have a long history. We review related
 work in \S\ref{sec-related}. Limitations of algebraic graphs and future
 research directions are discussed in \S\ref{sec-discussion}.
 
-\section{Motivation and background}\label{sec-motivation}
+\section{Motivation}\label{sec-motivation}
 
 As a motivating
 example, we look at two popular Haskell graph libraries. The first one is
@@ -224,13 +228,13 @@ b = buildG (1,3) $
 -- Remove vertex 2 from b
 c :: Graph
 c = buildG (1,3) $ filter
-    (not . adj 2) (edges b)
+    (notAdjacent 2) (edges b)
 \end{minted}
 \caption{\textsf{containers} library}
 \end{subfigure}
 \hfill
-\vrule
 \hfill
+\vrule
 \hfill
 \hfill
 \begin{subfigure}[b]{0.3\linewidth}
@@ -288,7 +292,7 @@ edge $1 \rightarrow 2$; graph $b$ is obtained by adding the vertex $3$
 and the edge $3 \rightarrow 1$ to $a$; finally, graph $c$ is obtained by removing
 the vertex $2$ from graph $b$.
 
-% As we show in \S\ref{sec-class}, these graphs can be
+% As we show in \S\ref{sec-core}, these graphs can be
 % described by the following algebraic expressions: $a = 1 \rightarrow 2$,
 % $b = 1 \rightarrow 2 + 3 \rightarrow 1$ and $c = 3 \rightarrow 1$.
 
@@ -328,7 +332,7 @@ the \textsf{containers} library.
 
 Algebraic graphs are built on the minimalistic type class \hs{Graph} comprising
 only four methods \hs{empty}, \hs{vertex}, \hs{overlay} and \hs{connect}, as
-defined in \S\ref{sec-class}. The code in
+defined in \S\ref{sec-core}. The code in
 Fig.~\ref{fig-example}(c) intentionally avoids helper library functions (apart
 from \hs{removeVertex}), performing the intended graph transformations using the
 bare-metal primitives of the algebra. Graph~$a$ is constructed by \emph{connecting}
@@ -336,11 +340,11 @@ vertices 1 and 2. This definition has no hidden partiality or ambiguity.
 Unlike the \textsf{containers} and \textsf{fgl} libraries, the type of vertices
 is not fixed to \hs{Int}, e.g. we could have used \hs{Integer} instead.
 Graph~$b$ is constructed by \emph{overlaying} $a$ with the edge $3 \rightarrow 1$.
-To remove the vertex 2 in $c$ we use the polymorphic library function
+To remove the vertex 2, we use the polymorphic library function
 \hs{removeVertex} that essentially replaces the vertex with the \hs{empty} graph,
-as explained in \S\ref{sec-transformations}.
-We argue that the algebraic interface is superior, because it
-abstracts away such details as sets of vertices and edges.
+as explained in \S\ref{sec-transformations}. We argue that the algebraic
+interface is superior, because it abstracts away such details as sets of
+vertices and edges, eliminating the need for partial functions.
 
 The main idea of this paper is that the proposed minimalistic core of four graph
 construction primitives provides a safe and flexible algebraic interface
@@ -357,7 +361,7 @@ as new, unknown forms of life.
 % with standard functional programming techniques."
 
 
-\section{The class of algebraic graphs}\label{sec-class}
+\section{The core}\label{sec-core}
 
 \section{Algebraic structure}\label{sec-algebra}
 
