@@ -368,9 +368,9 @@ universe $\mathbb{V}$. As an example, we can think of graphs whose vertices are
 positive integers. A graph $g \in G$ can be represented by a pair $(V, E)$ where
 $V\subseteq \mathbb{V}$ is the set of its vertices and $E \subseteq V \times V$ is
 the set of its edges.
-The constraint on $E$ means that not every pair $(V, E)$ corresponds to a graph,
-which leads to the partiality
-of many graph interfaces, as discussed in \S\ref{sec-motivation}.
+If $E \nsubseteq V \times V$, then the pair $(V, E)$ is inconsistent and does not
+correspond to a graph, which often leads to partial functions, as discussed
+in \S\ref{sec-motivation}.
 
 When one needs to guarantee the internal consistency of a data structure, such
 as the pair $(V, E)$, the standard solution is to define an abstract interface
@@ -385,14 +385,9 @@ $\varepsilon \in G$. A graph with a \emph{single vertex} $v \in \mathbb{V}$
 will be denoted simply by $v$. For example, $1 \in G$ is the graph
 $({1}, \varnothing)$.
 
-To construct larger graphs from the above primitives we define two binary
+To construct larger graphs from the above primitives we define binary
 operations \emph{overlay} and \emph{connect}, denoted by $+$ and $\rightarrow$,
-respectively\footnote{The operations of overlay and connect are also known
-as the \emph{graph union} and the \emph{graph join} in the literature,
-e.g see Harary~\citeyear{1969_graph_theory_harary},
-however their arguments are typically assumed to have disjoint sets of vertices.
-We make no such assumptions, therefore any two graphs can be composed using the
-overlay and connect operations.}. The overlay $+$ of two graphs is defined as
+respectively. The overlay operation $+$ is defined as
 \[
 (V_1, E_1) + (V_2, E_2)~~\defeq~~(V_1 \cup V_2, E_1 \cup E_2).
 \]
@@ -403,13 +398,22 @@ The connect $\rightarrow$ operation is defined in a similar manner:
 (V_1, E_1) \rightarrow (V_2, E_2)~~\defeq~~(V_1 \cup V_2, E_1 \cup E_2 \cup V_1 \times V_2).
 \]
 The difference is that when we connect two graphs, an edge is added from each
-vertex in the left-hand argument to each vertex in the right-hand argument.
+vertex in the left-hand argument to each vertex in the right-hand
+argument\footnote{Our definitions of overlay and connect coincide
+with those of graph \emph{union} and \emph{join}, respectively,
+e.g see Harary~\citeyear{1969_graph_theory_harary},
+however the arguments of union and join are typically assumed to have disjoint
+sets of vertices. We make no such assumptions and make the definitions total:
+any two graphs can be composed using overlay and connect.
+}.
 Note that the connect operation is the only source of edges when constructing
 graphs. As we will see in \S\ref{sec-algebra}, the overlay and connect are very
 similar to addition and multiplication, therefore connect has a higher
 precedence, i.e. $1 + 2 \rightarrow 3$ is interpreted as $1 + (2 \rightarrow 3)$.
 
-Here are a few examples:
+\noindent
+Fig.~\ref{fig-construction} illustrates a few examples of constructing graphs
+using the above primitives:
 \begin{itemize}
   \item $1 + 2$ is the graph with two isolated vertices 1 and 2.
   \item $1 \rightarrow 2$ is the graph with an edge between vertices 1
@@ -422,6 +426,41 @@ Here are a few examples:
   Fig.~\ref{fig-example}.
 \end{itemize}
 
+
+\begin{figure}
+\hspace{-5mm}
+\begin{subfigure}[b]{0.2\linewidth}
+\centerline{\includegraphics[scale=0.27]{fig/ex-a.pdf}}
+\vspace{-2.4mm}
+\caption{$1 + 2$}
+\centerline{\includegraphics[scale=0.27]{fig/ex-b.pdf}}
+\vspace{-2.4mm}
+\caption{$1 \rightarrow 2$}
+\end{subfigure}
+\hspace{10mm}
+\begin{subfigure}[b]{0.17\linewidth}
+\centerline{\includegraphics[scale=0.27]{fig/ex-c.pdf}}
+\vspace{-1mm}
+\caption{$1 \rightarrow (2 + 3)$}
+\end{subfigure}
+\hspace{12mm}
+\begin{subfigure}[b]{0.15\linewidth}
+\centerline{\includegraphics[scale=0.27]{fig/ex-d.pdf}}
+\vspace{2.4mm}
+\caption{$1 \rightarrow 1$}
+\end{subfigure}
+\hspace{12mm}
+\begin{subfigure}[b]{0.2\linewidth}
+\centerline{\includegraphics[scale=0.27]{fig/ex-e.pdf}}
+\vspace{-1mm}
+\caption{$1 \rightarrow 2 + 3 \rightarrow 1$}
+\end{subfigure}
+\vspace{-1mm}
+\caption{Examples of graph construction\label{fig-construction}}
+\vspace{-3mm}
+\end{figure}
+
+\vspace{-1mm}
 \subsection{Type class}
 
 We abstract the graph construction primitives defined in \S\ref{sub-constructing}
@@ -439,13 +478,55 @@ class Graph g where
 \vspace{1mm}
 
 \noindent
-Here the \emph{associated type}\footnote{Associated
+Here the associated type\footnote{Associated
 types~\cite{2005_associated_type_chakravarty} require the \textsf{TypeFamilies}
 GHC extension.} \hs{Vertex g} corresponds to the universe of graph
 vertices $\mathbb{V}$, the \hs{empty} method constructs the empty graph
-$\varepsilon$, the \hs{vertex} method creates a graph with a single vertex,
+$\varepsilon$, \hs{vertex} creates a graph with a single vertex,
 and \hs{overlay} and \hs{connect} compose given graphs according to
-the definitions in~\S\ref{sub-constructing}.
+the definitions in~\S\ref{sub-constructing}. The methods of the type class
+are total, i.e. they are defined for all possible inputs. They also satisfy a few
+laws and form an algebraic structure that is very similar to a \emph{semiring},
+see \S\ref{sec-algebra}.
+
+Let's put the core to the test and construct some graphs! A single edge is
+obtained by connecting two vertices:
+
+\begin{minted}{haskell}
+edge :: Graph g => Vertex g -> Vertex g -> g
+edge x y = connect (vertex x) (vertex y)
+\end{minted}
+
+\noindent
+The graphs in Fig.~\ref{fig-construction}(b,d) are \hs{edge 1 2} and
+\hs{edge 1 1}, respectively.
+A graph that contains a given list of isolated vertices can be constructed
+as follows:
+
+\begin{minted}{haskell}
+vertices :: Graph g => [Vertex g] -> g
+vertices = foldr overlay empty . map vertex
+\end{minted}
+
+\noindent
+That is, we turn each vertex into a singleton graph and overlay the results.
+The graph in Fig.~\ref{fig-construction}(a) is \hs{vertices [1,2]}.
+By replacing \hs{overlay} with \hs{connect} in the above
+function, we obtain a \emph{clique} -- a fully connected graph on a given list
+of vertices:
+
+\begin{minted}{haskell}
+clique :: Graph g => [Vertex g] -> g
+clique = foldr connect empty . map vertex
+\end{minted}
+
+\noindent
+For example, the infinite clique on all positive integers is \hs{clique [1..]}.
+
+The above graph construction functions are total, fully polymorphic, and elegant.
+Thanks to the minimalistic core type class, it is easy to wrap your favourite
+graph library into the provided interface, and reuse these functions, as well
+as many others that we define throughout this paper.
 
 \section{Algebraic structure}\label{sec-algebra}
 
