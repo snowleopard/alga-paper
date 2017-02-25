@@ -13,10 +13,11 @@
 
 % Haskell code snippets and useful shortcuts
 \usepackage{minted}
-%\usemintedstyle[haskell]{friendly}.
-\newcommand{\hs}{\mintinline[escapeinside=@@]{haskell}}
+\setminted[haskell]{escapeinside=@@}
+\newcommand{\hs}{\mintinline{haskell}}
 \newcommand{\teq}{\smaller $\sim$}
 \newcommand{\defeq}{\stackrel{\text{def}}{=}}
+\newcommand{\std}[1]{{\color[rgb]{0,0,0.6} #1}}
 
 \makeatletter\if@ACM@journal\makeatother
 %% Journal information (used by PACMPL format)
@@ -241,7 +242,7 @@ c = buildG (1,3) $ filter
 \hfill
 \hfill
 \begin{subfigure}[b]{0.3\linewidth}
-\begin{minted}[fontsize=\small,escapeinside=@@]{haskell}
+\begin{minted}[fontsize=\small]{haskell}
 import Data.Graph.Inductive
 
 -- Create graph 1 --> 2
@@ -488,10 +489,6 @@ are total, i.e. are defined for all possible inputs, therefore,
 the presented API allows \emph{fewer opportunities for usage errors}
 and \emph{greater opportunities for reuse}.
 
-% They also satisfy a few
-% laws and form an algebraic structure that is very similar to a \emph{semiring},
-% see \S\ref{sec-algebra}.
-
 Let's put the API to the test and construct some graphs! A single edge is
 obtained by connecting two vertices:
 
@@ -508,7 +505,7 @@ as follows:
 
 \begin{minted}{haskell}
 vertices :: Graph g => [Vertex g] -> g
-vertices = foldr overlay empty . map vertex
+vertices = @\std{foldr}@ overlay empty . @\std{map}@ vertex
 \end{minted}
 
 \noindent
@@ -520,7 +517,7 @@ of vertices:
 
 \begin{minted}{haskell}
 clique :: Graph g => [Vertex g] -> g
-clique = foldr connect empty . map vertex
+clique = @\std{foldr}@ connect empty . @\std{map}@ vertex
 \end{minted}
 
 \noindent
@@ -528,14 +525,14 @@ For example, the infinite clique on all positive integers is \hs{clique@\,@[1..]
 
 The above graph construction functions are total, fully polymorphic, and elegant.
 Thanks to the minimalistic core type class, it is easy to wrap your favourite
-graph library into the presented interface, and reuse these functions, as well
+graph library into the described interface, and reuse these functions, as well
 as many others that we define throughout this paper.
 
 \section{Algebraic structure}\label{sec-algebra}
 
 The functions \hs{edge}, \hs{vertices} and \hs{clique} defined in the previous
 section \S\ref{sec-core} satisfy a few properties that we can intuitively write down,
-but which may be tricky to prove:
+but which may seem tricky to prove (we encourage the reader to try):
 \begin{itemize}
     \item \hs{edge x y} $\ =\ $ \hs{clique [x,y]}.
     \item \hs{vertices [x]} $\ =\ $ \hs{vertex x}.
@@ -543,10 +540,12 @@ but which may be tricky to prove:
     $g$ is a subgraph of $h$.
     \item \hs{clique (xs ++ ys)} $\ =\ $ \hs{connect (}\hs{clique xs) (}\hs{clique ys)}.
 \end{itemize}
-I this section we characterise algebraic graphs with a set of axioms, which allows to
-easily prove the above properties using equational reasoning. The presented
-characterisation is generally useful for formal verification as well as automated
-testing of graph library APIs, e.g. using QuickCheck~\cite{2011_quickcheck_claessen}.
+
+In this section we characterise the \hs{Graph} type class with a set of
+axioms that reveal an algebraic structure very similar to a \emph{semiring}.
+This provides a convenient framework for proving the above properties using equational
+reasoning, and is generally useful for formal verification, as well as automated testing
+of graph library APIs, e.g. using QuickCheck~\cite{2011_quickcheck_claessen}.
 
 \section{Graphs a la carte}\label{sec-a-la-carte}
 
