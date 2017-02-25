@@ -428,7 +428,6 @@ using the defined primitives:
   Fig.~\ref{fig-example}.
 \end{itemize}
 
-
 \begin{figure}
 \hspace{-5mm}
 \begin{subfigure}[b]{0.2\linewidth}
@@ -463,7 +462,7 @@ using the defined primitives:
 \end{figure}
 
 \vspace{-1mm}
-\subsection{Type class}
+\subsection{Type class}\label{sub-class}
 
 We abstract the graph construction primitives defined in \S\ref{sub-constructing}
 as the type class \hs{Graph}:
@@ -546,6 +545,64 @@ axioms that reveal an algebraic structure very similar to a \emph{semiring}.
 This provides a convenient framework for proving the above properties using equational
 reasoning, and is generally useful for formal verification, as well as automated testing
 of graph library APIs, e.g. using QuickCheck~\cite{2011_quickcheck_claessen}.
+
+\begin{figure}
+\begin{subfigure}[b]{0.4\linewidth}
+\centerline{\includegraphics[scale=0.27]{fig/ax-distributivity.pdf}}
+\caption{Left distributivity: $1 \rightarrow (2 + 3) = 1 \rightarrow 2 + 1 \rightarrow 3$ }
+\end{subfigure}
+\hspace{12mm}
+\begin{subfigure}[b]{0.5\linewidth}
+\centerline{\includegraphics[scale=0.27]{fig/ax-decomposition.pdf}}
+\caption{Decomposition: $1 \rightarrow 2 \rightarrow 3 = 1 \rightarrow 2 +
+1 \rightarrow 3 + 2 \rightarrow 3$}
+\end{subfigure}
+\vspace{-1mm}
+\caption{Two axioms of the algebra of graphs\label{fig-axioms}}
+\vspace{-3mm}
+\end{figure}
+
+\subsection{Axiomatic characterisation}
+
+The definitions of \hs{vertices} and \hs{clique} in \S\ref{sub-class}
+use $\varepsilon$ as the identity for both overlay $+$ and connect $\rightarrow$
+operations. This seems unusual, but we can easily check that
+$x + \varepsilon = x$ and $x \rightarrow \varepsilon = x$ for any graph $x \in G$
+by plugging the empty graph into the definitions of overlay and connect,
+respectively. Furthermore, we can verify the following:
+\begin{itemize}
+    \item $(G,+,\varepsilon)$ is an idempotent commutative monoid.
+    \item $(G,\rightarrow,\varepsilon)$ is a monoid.
+    \item $\rightarrow$ distributes over $+$, e.g.
+    $1 \rightarrow (2 + 3) = 1 \rightarrow 2 + 1 \rightarrow 3$, as illustrated
+    in Fig.~\ref{fig-axioms}(a).
+\end{itemize}
+
+\noindent
+The above looks remarkably close to a semiring\footnote{
+See Dolan~\citeyear{2013_semirings_dolan} for an entertaining exploration of
+applications of semirings in graph theory.}, with the only oddity that the two
+operations share the same identity. The following \emph{decomposition} law, is
+the what makes the algebra of graphs different:
+\[
+x \rightarrow y \rightarrow z = x \rightarrow y + x \rightarrow z + y \rightarrow z
+\]
+
+\noindent
+Fig.~\ref{fig-axioms}(b) illustrates the law by showing that the triangle
+graph can be obtained in two different ways: by connecting three vertices
+of the triangle or by constructing its edges separately and overlaying them.
+
+Interestingly, the fact that overlay and connect share the same identity
+follows from the decomposition law. Indeed, let $\varepsilon_{+}$ and
+$\varepsilon_{\rightarrow}$ stand for the identities of $+$ and $\rightarrow$,
+respectively. Then we can prove that they coincide using the decomposition:
+
+\[
+\begin{array}{rcll}
+\varepsilon_{+} & = & \varepsilon_{+} \rightarrow \varepsilon_{\rightarrow} \rightarrow \varepsilon_{\rightarrow} & \text{(identity of $\rightarrow$)}\\
+\end{array}
+\]
 
 \section{Graphs a la carte}\label{sec-a-la-carte}
 
