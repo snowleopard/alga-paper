@@ -13,7 +13,8 @@
 
 % Haskell code snippets and useful shortcuts
 \usepackage{minted}
-\newcommand{\hs}{\mintinline{haskell}}
+%\usemintedstyle[haskell]{friendly}.
+\newcommand{\hs}{\mintinline[escapeinside=@@]{haskell}}
 \newcommand{\teq}{\smaller $\sim$}
 \newcommand{\defeq}{\stackrel{\text{def}}{=}}
 
@@ -359,9 +360,9 @@ as new, unknown forms of life.
 In this section we define the \emph{core} of algebraic graphs -- a minimal set
 of graph construction primitives that are compositional and total. The core is
 built on the \emph{algebra of parameterised graphs}, a mathematical formalism
-proposed by Mokhov and Khomenko~\citeyear{2014_algebra_mokhov} for formal
-modelling of hardware systems, which we distil and adapt to the context of
-graph representation in functional programming languages.
+used in hardware design~\cite{2014_algebra_mokhov},
+which we distil and adapt to the context of graph representation in functional
+programming languages.
 
 Let $G$ be a set of unlabelled directed graphs whose vertices come from a fixed
 universe $\mathbb{V}$. As an example, we can think of graphs whose vertices are
@@ -398,7 +399,7 @@ The connect $\rightarrow$ operation is defined in a similar manner:
 (V_1, E_1) \rightarrow (V_2, E_2)~~\defeq~~(V_1 \cup V_2, E_1 \cup E_2 \cup V_1 \times V_2).
 \]
 The difference is that when we connect two graphs, an edge is added from each
-vertex in the left-hand argument to each vertex in the right-hand
+vertex of the left-hand argument to each vertex of the right-hand
 argument\footnote{Our definitions of overlay and connect coincide
 with those of graph \emph{union} and \emph{join}, respectively,
 e.g see Harary~\citeyear{1969_graph_theory_harary},
@@ -413,7 +414,7 @@ precedence, i.e. $1 + 2 \rightarrow 3$ is interpreted as $1 + (2 \rightarrow 3)$
 
 \noindent
 Fig.~\ref{fig-construction} illustrates a few examples of constructing graphs
-using the above primitives:
+using the defined primitives:
 \begin{itemize}
   \item $1 + 2$ is the graph with two isolated vertices 1 and 2.
   \item $1 \rightarrow 2$ is the graph with an edge between vertices 1
@@ -437,7 +438,7 @@ using the above primitives:
 \vspace{-2.4mm}
 \caption{$1 \rightarrow 2$}
 \end{subfigure}
-\hspace{10mm}
+\hspace{11mm}
 \begin{subfigure}[b]{0.17\linewidth}
 \centerline{\includegraphics[scale=0.27]{fig/ex-c.pdf}}
 \vspace{-1mm}
@@ -466,7 +467,6 @@ using the above primitives:
 We abstract the graph construction primitives defined in \S\ref{sub-constructing}
 as the type class \hs{Graph}:
 
-\vspace{1mm}
 \begin{minted}{haskell}
 class Graph g where
     type Vertex g
@@ -475,21 +475,24 @@ class Graph g where
     overlay :: g -> g -> g
     connect :: g -> g -> g
 \end{minted}
-\vspace{1mm}
 
 \noindent
 Here the associated type\footnote{Associated
 types~\cite{2005_associated_type_chakravarty} require the \textsf{TypeFamilies}
-GHC extension.} \hs{Vertex g} corresponds to the universe of graph
-vertices $\mathbb{V}$, the \hs{empty} method constructs the empty graph
-$\varepsilon$, \hs{vertex} creates a graph with a single vertex,
+GHC extension.} \hs{Vertex@\,@g} corresponds to the universe of graph
+vertices $\mathbb{V}$, \hs{empty} is the empty graph
+$\varepsilon$, \hs{vertex} constructs a graph with a single vertex,
 and \hs{overlay} and \hs{connect} compose given graphs according to
-the definitions in~\S\ref{sub-constructing}. The methods of the type class
-are total, i.e. they are defined for all possible inputs. They also satisfy a few
-laws and form an algebraic structure that is very similar to a \emph{semiring},
-see \S\ref{sec-algebra}.
+the definitions in~\S\ref{sub-constructing}. All methods of the type class
+are total, i.e. are defined for all possible inputs, therefore,
+the presented API allows \emph{fewer opportunities for usage errors}
+and \emph{greater opportunities for reuse}.
 
-Let's put the core to the test and construct some graphs! A single edge is
+% They also satisfy a few
+% laws and form an algebraic structure that is very similar to a \emph{semiring},
+% see \S\ref{sec-algebra}.
+
+Let's put the API to the test and construct some graphs! A single edge is
 obtained by connecting two vertices:
 
 \begin{minted}{haskell}
@@ -498,8 +501,8 @@ edge x y = connect (vertex x) (vertex y)
 \end{minted}
 
 \noindent
-The graphs in Fig.~\ref{fig-construction}(b,d) are \hs{edge 1 2} and
-\hs{edge 1 1}, respectively.
+The graphs in Fig.~\ref{fig-construction}(b,d) are \hs{edge@\,@1@\,@2} and
+\hs{edge@\,@1@\,@1}, respectively.
 A graph that contains a given list of isolated vertices can be constructed
 as follows:
 
@@ -510,7 +513,7 @@ vertices = foldr overlay empty . map vertex
 
 \noindent
 That is, we turn each vertex into a singleton graph and overlay the results.
-The graph in Fig.~\ref{fig-construction}(a) is \hs{vertices [1,2]}.
+The graph in Fig.~\ref{fig-construction}(a) is \hs{vertices@\,@[1,2]}.
 By replacing \hs{overlay} with \hs{connect} in the above
 function, we obtain a \emph{clique} -- a fully connected graph on a given list
 of vertices:
@@ -521,11 +524,11 @@ clique = foldr connect empty . map vertex
 \end{minted}
 
 \noindent
-For example, the infinite clique on all positive integers is \hs{clique [1..]}.
+For example, the infinite clique on all positive integers is \hs{clique@\,@[1..]}.
 
 The above graph construction functions are total, fully polymorphic, and elegant.
 Thanks to the minimalistic core type class, it is easy to wrap your favourite
-graph library into the provided interface, and reuse these functions, as well
+graph library into the presented interface, and reuse these functions, as well
 as many others that we define throughout this paper.
 
 \section{Algebraic structure}\label{sec-algebra}
