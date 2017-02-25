@@ -320,7 +320,7 @@ to create graph~$a$ we call the \hs{mkUGraph} method, which is similar to
 \hs{buildG} from the \textsf{containers} library and also needs to deal with the
 awkward case when the sets of vertices and edges are inconsistent; instead of
 failing with an error, \textsf{fgl} chooses to ignore edges adjacent to non-existent
-vertices, hence \hs{mkUGraph [] [(1,2)]} creates the empty graph. To construct
+vertices, hence \hs{mkUGraph [}\hs{] [(1,2)]} creates the empty graph. To construct
 graph~$b$, we first add the vertex 3 to $a$ and then add the edge $3 \rightarrow 1$.
 If we skip the first step, \hs{insEdge} fails with the
 \textsf{`edge from non-existent vertex'} error.
@@ -529,6 +529,21 @@ graph library into the provided interface, and reuse these functions, as well
 as many others that we define throughout this paper.
 
 \section{Algebraic structure}\label{sec-algebra}
+
+The functions \hs{edge}, \hs{vertices} and \hs{clique} defined in the previous
+section \S\ref{sec-core} satisfy a few properties that we can intuitively write down,
+but which may be tricky to prove:
+\begin{itemize}
+    \item \hs{edge x y} $\ =\ $ \hs{clique [x,y]}.
+    \item \hs{vertices [x]} $\ =\ $ \hs{vertex x}.
+    \item \hs{vertices xs} $\ \subseteq\ $ \hs{clique xs}, where $g \subseteq h$ means
+    $g$ is a subgraph of $h$.
+    \item \hs{clique (xs ++ ys)} $\ =\ $ \hs{connect (}\hs{clique xs) (}\hs{clique ys)}.
+\end{itemize}
+I this section we characterise algebraic graphs with a set of axioms, which allows to
+easily prove the above properties using equational reasoning. The presented
+characterisation is generally useful for formal verification as well as automated
+testing of graph library APIs, e.g. using QuickCheck~\cite{2011_quickcheck_claessen}.
 
 \section{Graphs a la carte}\label{sec-a-la-carte}
 
