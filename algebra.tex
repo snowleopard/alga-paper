@@ -16,8 +16,10 @@ axioms that reveal an algebraic structure very similar to a semiring\footnote{
 See Golan~\citeyear{1999_semirings_golan} for a classic overview of semiring
 applications. Dolan~\citeyear{2013_semirings_dolan} uses the semiring theory
 to implement graph algorithms.}.
-This provides a convenient framework for proving the above properties using equational
-reasoning, and is generally useful for formal verification, as well as automated testing
+This provides a convenient framework for proving graph properties, such as
+those listed above, using equational
+reasoning. The presented characterisation is generally useful for formal
+verification, as well as automated testing
 of graph library APIs, e.g. by using QuickCheck~\cite{2011_quickcheck_claessen}.
 
 \begin{figure}
@@ -229,6 +231,59 @@ we make the inductive hypothesis (*) that
 This completes our proof: \hs{vertices xs} $\ \subseteq\ $ \hs{clique xs}
 holds in all possible cases.
 
+\begin{figure}[b]
+\vspace{-2mm}
+\begin{subfigure}[b]{0.45\linewidth}
+\begin{minted}[fontsize=\small]{haskell}
+gen :: (Graph g, Arbitrary (Vertex g)) => Gen g
+gen = sized expr
+  where
+    expr 0 = @\std{return}@ empty
+    expr 1 = @\std{fmap}@ vertex arbitrary
+    expr n = do
+        sizeLeft <- choose (0, n)
+        l <- expr sizeLeft
+        r <- expr (n - sizeLeft)
+        elements [ overlay l r, connect l r ]
+
+instance Arbitrary a => Arbitrary (Expr a) where
+    arbitrary = gen
+
+    shrink Empty = []
+    ...
+\end{minted}
+\caption{Generating arbitrary algebraic graphs}
+\end{subfigure}
+\hfill
+\hfill
+\vrule
+\hfill
+\begin{subfigure}[b]{0.45\linewidth}
+\begin{minted}[fontsize=\small]{haskell}
+(+) = overlay -- convenient shortcuts
+(*) = connect
+
+type GraphTestsuite g = (Eq g, Graph g)
+    => g -> g -> g -> Property
+
+axioms :: GraphTestsuite g
+axioms x y z = conjoin
+    [       x + y == y + x
+    , x + (y + z) == (x + y) + z
+    ,   empty * x == x
+    ,   x * empty == x
+    , x * (y * z) == (x * y) * z
+    , x * (y + z) == x * y + x * z
+    , (x + y) * z == x * z + y * z
+    ,   x * y * z == x * y + x * z + y * z ]
+\end{minted}
+\caption{Testsuite for the minimal set of axioms}
+\end{subfigure}
+\vspace{-3mm}
+\caption{Automated testing infrastructure\label{fig-testing}}
+\vspace{-3mm}
+\end{figure}
+
 \subsection{Automated testing}\label{sub-testing}
 
 Theorem provers, such as Liquid Haskell~\cite{2016_vazou_liquid},
@@ -237,4 +292,38 @@ however, automated testing remains an effective and pervasively used
 method for formulating and testing functional properties. In Haskell,
 the go-to tool for automated testing is QuickCheck developed by
 Claessen and Hughes~\citeyear{2011_quickcheck_claessen}.
+Fig.~\ref{fig-testing} shows a reusable testing infrastructure for
+algebraic graphs. The function~\hs{gen} in Fig.~\ref{fig-testing}(a)
+allows to generate arbitrary graph expressions of specified size.
+It is polymorphic and can therefore be used as a default implementation
+of QuickCheck's \hs{Arbitrary} type class, as shown by a sketch of
+the \hs{Arbitrary@\,\,@(Expr@\,\,\blk{a}@)} instance, where \hs{Expr}
+is a \hs{Graph} instance defined in the next section~\S\ref{sec-a-la-carte}.
 
+Fig.~\ref{fig-testing}(b) shows an implementation of the \hs{axioms}
+testsuite that can be used for testing a \hs{Graph} instance against
+the minimal set of axioms defined in~\S\ref{sub-laws}.
+For example, let's do a quick check of \hs{Expr@\,@Int} in interactive GHC:
+
+\begin{minted}{haskell}
+@\ghci @quickCheck (axioms :: GraphTestsuite (Expr Int))
+@\blk{+++ OK, passed 100 tests.}@
+\end{minted}
+
+\noindent
+QuickCheck generates 100 random test cases $(x,y,z)$ using the \hs{gen}
+function and checks that \hs{axioms@\,$x\,y\,z$@} holds in each case. Note
+that we have to tell QuickCheck which specific \hs{Graph} instance to test
+by providing a type signature for the polymorphic \hs{axioms} testsuite.
+
+Finally, let's use QuickCheck to test the property
+\hs{clique (xs ++ ys)} $\ =\ $ \hs{connect (}\hs{clique xs) (}\hs{clique ys)},
+which we observed in the beginning of this section:
+
+\begin{minted}{haskell}
+@\ghci @quickCheck $ \xs ys -> clique (xs ++ ys) == connect (clique xs) (clique ys :: Epxr Int)
+@\blk{+++ OK, passed 100 tests.}@
+\end{minted}
+
+\noindent
+Viola! Can you formally prove the property? We bet it will not be as quick.
