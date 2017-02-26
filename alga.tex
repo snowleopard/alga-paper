@@ -17,7 +17,7 @@
 \newcommand{\hs}{\mintinline{haskell}}
 \newcommand{\teq}{\smaller $\sim$}
 \newcommand{\defeq}{\stackrel{\text{def}}{=}}
-\newcommand{\std}[1]{{\color[rgb]{0,0,0.6} #1}}
+\newcommand{\std}[1]{{\color[rgb]{0,0.3,0} #1}}
 
 \makeatletter\if@ACM@journal\makeatother
 %% Journal information (used by PACMPL format)
@@ -533,23 +533,24 @@ The functions \hs{edge}, \hs{vertices} and \hs{clique} defined in the previous
 section \S\ref{sec-core} satisfy a few properties that we can intuitively write down,
 but which may seem tricky to prove (we encourage the reader to try):
 \begin{itemize}
-    \item \hs{edge x y} $\ =\ $ \hs{clique [x,y]}.
-    \item \hs{vertices [x]} $\ =\ $ \hs{vertex x}.
-    \item \hs{vertices xs} $\ \subseteq\ $ \hs{clique xs}, where $g \subseteq h$ means
-    $g$ is a subgraph of $h$.
+    \item \hs{vertex x} $\ =\ $ \hs{vertices [x]} and \hs{edge x y} $\ =\ $ \hs{clique [x,y]}.
+    \item \hs{vertices xs} $\ \subseteq\ $ \hs{clique xs}, where $x \subseteq y$ means
+    $x$ is a subgraph of $y$.
     \item \hs{clique (xs ++ ys)} $\ =\ $ \hs{connect (}\hs{clique xs) (}\hs{clique ys)}.
 \end{itemize}
 
 In this section we characterise the \hs{Graph} type class with a set of
-axioms that reveal an algebraic structure very similar to a \emph{semiring}.
+axioms that reveal an algebraic structure very similar to a semiring\footnote{
+See Dolan~\citeyear{2013_semirings_dolan} for an entertaining exploration of
+applications of semirings in graph theory.}.
 This provides a convenient framework for proving the above properties using equational
 reasoning, and is generally useful for formal verification, as well as automated testing
-of graph library APIs, e.g. using QuickCheck~\cite{2011_quickcheck_claessen}.
+of graph library APIs, e.g. by using QuickCheck~\cite{2011_quickcheck_claessen}.
 
 \begin{figure}
 \begin{subfigure}[b]{0.4\linewidth}
 \centerline{\includegraphics[scale=0.27]{fig/ax-distributivity.pdf}}
-\caption{Left distributivity: $1 \rightarrow (2 + 3) = 1 \rightarrow 2 + 1 \rightarrow 3$ }
+\caption{Distributivity: $1 \rightarrow (2 + 3) = 1 \rightarrow 2 + 1 \rightarrow 3$ }
 \end{subfigure}
 \hspace{12mm}
 \begin{subfigure}[b]{0.5\linewidth}
@@ -557,9 +558,9 @@ of graph library APIs, e.g. using QuickCheck~\cite{2011_quickcheck_claessen}.
 \caption{Decomposition: $1 \rightarrow 2 \rightarrow 3 = 1 \rightarrow 2 +
 1 \rightarrow 3 + 2 \rightarrow 3$}
 \end{subfigure}
-\vspace{-1mm}
-\caption{Two axioms of the algebra of graphs\label{fig-axioms}}
 \vspace{-3mm}
+\caption{Two axioms of the algebra of graphs\label{fig-axioms}}
+\vspace{-4mm}
 \end{figure}
 
 \subsection{Axiomatic characterisation}
@@ -579,11 +580,9 @@ respectively. Furthermore, we can verify the following:
 \end{itemize}
 
 \noindent
-The above looks remarkably close to a semiring\footnote{
-See Dolan~\citeyear{2013_semirings_dolan} for an entertaining exploration of
-applications of semirings in graph theory.}, with the only oddity that the two
-operations share the same identity. The following \emph{decomposition} law, is
-the what makes the algebra of graphs different:
+The above looks remarkably close to a semiring, with the only oddity being the shared
+identity of the two operations. The following \emph{decomposition} law is
+what makes the algebra of graphs different:
 \[
 x \rightarrow y \rightarrow z = x \rightarrow y + x \rightarrow z + y \rightarrow z
 \]
@@ -596,15 +595,94 @@ of the triangle or by constructing its edges separately and overlaying them.
 Interestingly, the fact that overlay and connect share the same identity
 follows from the decomposition law. Indeed, let $\varepsilon_{+}$ and
 $\varepsilon_{\rightarrow}$ stand for the identities of $+$ and $\rightarrow$,
-respectively. Then we can prove that they coincide using the decomposition:
-
+respectively. Then:
 \[
 \begin{array}{rcll}
 \varepsilon_{+} & = & \varepsilon_{+} \rightarrow \varepsilon_{\rightarrow} \rightarrow \varepsilon_{\rightarrow} & \text{(identity of $\rightarrow$)}\\
+ & = & \varepsilon_{+} \rightarrow \varepsilon_{\rightarrow} + \varepsilon_{+} \rightarrow \varepsilon_{\rightarrow} + \varepsilon_{\rightarrow} \rightarrow \varepsilon_{\rightarrow} & \text{(decomposition)}\\
+ & = & \varepsilon_{+} + \varepsilon_{+} + \varepsilon_{\rightarrow} & \text{(identity of $\rightarrow$)}\\
+ & = & \varepsilon_{\rightarrow} & \text{(identity of $+$)}\\
 \end{array}
 \]
 
-\section{Graphs a la carte}\label{sec-a-la-carte}
+\noindent
+Furthermore, the idempotence of $+$ also follows from the decomposition, which
+leads to the following \emph{minimal set of axioms that characterise algebraic graphs}:
+
+\begin{itemize}
+    \item $+$ is commutative and associative: $x + y = y + x$ and
+    $x + (y + z) = (x + y) + z$.
+    \item $(G, \rightarrow, \varepsilon)$ is a monoid:
+    $\varepsilon \rightarrow x = x \rightarrow \varepsilon = x$ and
+    $x \rightarrow (y \rightarrow z) = (x \rightarrow y) \rightarrow z$.
+    \item Distributivity:
+    $x \rightarrow (y + z) = x \rightarrow y + x \rightarrow z$ and
+    $(x + y) \rightarrow z = x \rightarrow z + y \rightarrow z$.
+    \item Decomposition: $x \rightarrow y \rightarrow z =
+    x \rightarrow y + x \rightarrow z + y \rightarrow z$.
+\end{itemize}
+
+We require all \hs{Graph} instances to satisfy these 8 axioms. Our definition
+of graph construction primitives in~\S\ref{sub-constructing} does satisfy them
+all and is therefore a valid \hs{Graph} instance, which we will implement
+in~\S\ref{sub-instances}. There are many other useful instances and we will discuss
+them in~\S\ref{sec-a-la-carte}. Some of them satisfy additional
+axioms, for example, by making the connect $\rightarrow$ operation commutative,
+we obtain undirected graphs.
+
+Algebraic graphs are \emph{complete} in the sense that it is possible to describe
+any graph using the core interface. Indeed, given a graph $(V,E)$ we can construct
+it as \hs{graph@$\,V\,E$@} where function \hs{graph} is defined as follows.
+
+\begin{minted}{haskell}
+graph :: Graph g => [Vertex g] -> [(Vertex g, Vertex g)] -> g
+graph vs es = overlay (vertices vs) (edges es)
+\end{minted}
+
+Here \hs{edges} is a generalisation of \hs{edge} to a list of edges, so that
+\hs{edge x y} $\ =\ $ \hs{edges [(x,y)]}:
+
+\begin{minted}{haskell}
+edges :: Graph g => [(Vertex g, Vertex g)] -> g
+edges = @\std{foldr}@ overlay empty . @\std{map}@ (@\std{uncurry}@ edge)
+\end{minted}
+
+Note that \hs{graph} is total thanks to the \emph{absorption theorem}
+$x \rightarrow y + x + y = x \rightarrow y$, which in particular states that
+an edge $(u,v)$ contains its two vertices $\{u,v\}$ and is inseparable
+from them. Therefore, if the pair $(V,E)$ is inconsistent, the set of vertices of
+the resulting graph will be expanded to $\hat{V}$ so that
+$E\subseteq \hat{V}\times \hat{V}$ holds. More generally,
+in addition to being complete, the algebraic graph API is also \emph{sound} in
+the sense that it is impossible to construct an inconsistent pair $(V,E)$
+using the four \hs{Graph} methods.
+
+The following theorems can be proved from the minimal set of axioms:
+
+\begin{itemize}
+    \item Identity of $+$: $x + \varepsilon = x$.
+    \item Idempotence of $+$: $x + x = x$.
+    \item Absorption: $x \rightarrow y + x + y = x \rightarrow y$.
+    \item Saturation: $x \rightarrow x \rightarrow x = x \rightarrow x$.
+\end{itemize}
+
+We leave the proof to the reader as a not entirely trivial exercise.
+A machine-assisted proof can be found in~\cite{2014_alekseyev_phd}
+where the algebra of parameterised graphs (that we build on) has been formalised in Agda.
+
+\subsection{Equational reasoning}\label{sub-reasoning}
+
+We now use the
+
+\subsection{Two \hs{Graph} instances}\label{sub-instances}
+
+free model
+
+\subsection{Automated testing}\label{sub-testing}
+
+arbitrary
+
+\section{Graphs \`{a} la carte}\label{sec-a-la-carte}
 
 \section{Graph transformation library}\label{sec-transformations}
 
