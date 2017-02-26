@@ -18,6 +18,7 @@
 \newcommand{\teq}{\smaller $\sim$}
 \newcommand{\defeq}{\stackrel{\text{def}}{=}}
 \newcommand{\std}[1]{{\color[rgb]{0,0.3,0} #1}}
+\newcommand{\blk}[1]{{\color[rgb]{0,0,0} #1}}
 
 \makeatletter\if@ACM@journal\makeatother
 %% Journal information (used by PACMPL format)
@@ -563,7 +564,7 @@ of graph library APIs, e.g. by using QuickCheck~\cite{2011_quickcheck_claessen}.
 \vspace{-4mm}
 \end{figure}
 
-\subsection{Axiomatic characterisation}
+\subsection{Axiomatic characterisation}\label{sub-laws}
 
 The definitions of \hs{vertices} and \hs{clique} in \S\ref{sub-class}
 use $\varepsilon$ as the identity for both overlay $+$ and connect $\rightarrow$
@@ -667,22 +668,103 @@ The following theorems can be proved from the minimal set of axioms:
 \end{itemize}
 
 We leave the proof to the reader as a not entirely trivial exercise.
-A machine-assisted proof can be found in~\cite{2014_alekseyev_phd}
-where the algebra of parameterised graphs (that we build on) has been formalised in Agda.
+Alekseyev~\citeyear{2014_alekseyev_phd} formalised the algebra of
+parameterised graphs (that we build on) in Agda and derived a
+machine-assisted proof of these theorems.
+
+\subsection{Partial order on graphs}\label{sub-partial-order}
+
+It is fairly standard to define $x \preceq y$ as $x + y = y$ for an
+idempotent $+$ operation, since it gives a partial order on the elements
+of the algebra. Indeed, all partial order laws are satisfied:
+
+\begin{itemize}
+     \item Reflexivity $x \preceq x$ follows from the idempotence $x + x = x$.
+     \item Antisymmetry $x \preceq y \wedge y \preceq x \Rightarrow x = y$ holds
+     since $x + y = y$ and $y + x = x$ imply $x = y$.
+     \item Transitivity $x \preceq y \wedge y \preceq z \Rightarrow x \preceq z$
+     can be proved as $z = y + z = (x + y) + z = x + (y + z) = x + z$.
+ \end{itemize}
+
+\noindent
+It turns out that this definition corresponds to the \emph{subgraph} relation,
+i.e. we can define:
+\[
+x \subseteq y~~\defeq~~x + y = y.
+\]
+
+\noindent
+Indeed, expanding $x + y = y$ to $(V_x,E_x) + (V_y,E_y) = (V_y,E_y)$ gives us
+$V_x \cup V_y = V_y$ and $E_x \cup E_y = E_y$, which is equivalent to
+$V_x \subseteq V_y$ and $E_x \subseteq E_y$, as desired.
+
+Therefore, we can check if a graph is a subgraph of another one if we know how to
+compare graphs for equality:
+\begin{minted}{haskell}
+isSubgraphOf :: (Graph g, Eq g) => g -> g -> Bool
+isSubgraphOf x y = overlay x y == y
+\end{minted}
+
+The following theorems can be proved:
+
+\begin{itemize}
+    \item Lower bound: $\varepsilon \subseteq x$.
+    \item Overlay order: $x \subseteq x + y$.
+    \item Overlay-connect order: $x + y \subseteq x \rightarrow y$.
+    \item Order consistency: $x \subseteq y \Rightarrow (x + z \subseteq y + z)
+    \wedge (x \rightarrow z \subseteq y \rightarrow z)
+    \wedge (z \rightarrow x \subseteq z \rightarrow y)$.
+
+\end{itemize}
 
 \subsection{Equational reasoning}\label{sub-reasoning}
 
-We now use the
+In this subsection we show how to use equational reasoning and the laws
+of the algebra to prove properties of functions on graphs.
+For example, let's prove that \hs{vertex x} $=$ \hs{vertices [x]} by rewriting
+the right-hand side:
+\[
+\begin{array}{rcll}
+\hs{vertices [x]} & = & \hs{@\std{foldr}@ overlay empty (@\std{map}@ vertex [x])} & \text{(definition of \hs{vertices})}\\
+ & = & \hs{@\std{foldr}@ overlay empty [vertex x]} & \text{(definition of }\hs{@\std{map}@}\text{)}\\
+ & = & \hs{overlay (vertex x) empty} & \text{(definition of }\hs{@\std{foldr}@}\text{)}\\
+ & = & \hs{vertex x} & \text{(overlay identity)}\\
+\end{array}
+\]
 
-\subsection{Two \hs{Graph} instances}\label{sub-instances}
+Proving that \hs{vertices xs} $\ \subseteq\ $ \hs{clique xs} requires more work.
+We start with the case when $\hs{@\blk{xs}@}$ is the empty list $\hs{[@@]}$,
+which is straightforward:
+$\hs{vertices [@@]} = \varepsilon \subseteq \varepsilon = \hs{clique [@@]}$,
+as follows from the definition of \hs{@\std{foldr}@}.
+If $\hs{@\blk{xs}@}$ is non-empty, i.e. $\hs{@\blk{xs}@}\ =\ \hs{@\blk{h}@:t}$,
+we make the inductive hypothesis (*) that
+\hs{vertices t} $\ \subseteq\ $ \hs{clique t} and proceed as follows:
+\[
+\begin{array}{rcll}
+\hs{vertices (h:t)} & = & \hs{@\std{foldr}@ overlay empty (@\std{map}@ vertex (h:t))} & \text{(definition of \hs{vertices})}\\
+ & = & \hs{@\std{foldr}@ overlay empty (vertex h : @\std{map}@ vertex t)} & \text{(definition of }\hs{@\std{map}@}\text{)}\\
+ & = & \hs{overlay (vertex h) (vertices t)} & \text{(definition of }\hs{@\std{foldr}@}\text{)}\\
+ & \subseteq & \hs{overlay (vertex h) (clique t)} & \text{(order consistency and *)}\\
+ & \subseteq & \hs{connect (vertex h) (clique t)} & \text{(overlay-connect order)}\\
+ & = & \hs{@\std{foldr}@ connect empty (vertex h : @\std{map}@ vertex t)} & \text{(definition of }\hs{@\std{foldr}@}\text{)}\\
+ & = & \hs{@\std{foldr}@ connect empty (@\std{map}@ vertex (h:t))} & \text{(definition of }\hs{@\std{map}@}\text{)}\\
+ & = & \hs{clique (h:t)} & \text{(definition of \hs{clique})}\\
+\end{array}
+\]
 
-free model
+\noindent
+This completes our proof: \hs{vertices xs} $\ \subseteq\ $ \hs{clique xs}
+holds in all possible cases.
 
-\subsection{Automated testing}\label{sub-testing}
-
-arbitrary
+% \subsection{Automated testing}\label{sub-testing}
+% arbitrary
 
 \section{Graphs \`{a} la carte}\label{sec-a-la-carte}
+
+Relation, Basic
+free model
+
 
 \section{Graph transformation library}\label{sec-transformations}
 
