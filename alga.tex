@@ -406,7 +406,7 @@ argument\footnote{Our definitions of overlay and connect coincide
 with those of graph \emph{union} and \emph{join}, respectively,
 e.g see Harary~\citeyear{1969_graph_theory_harary},
 however the arguments of union and join are typically assumed to have disjoint
-sets of vertices. We make no such assumptions and make the definitions total:
+sets of vertices. We make no such assumptions, hence our definitions are total:
 any two graphs can be composed using overlay and connect.
 }.
 Note that the connect operation is the only source of edges when constructing
@@ -542,8 +542,9 @@ but which may seem tricky to prove (we encourage the reader to try):
 
 In this section we characterise the \hs{Graph} type class with a set of
 axioms that reveal an algebraic structure very similar to a semiring\footnote{
-See Dolan~\citeyear{2013_semirings_dolan} for an entertaining exploration of
-applications of semirings in graph theory.}.
+See Golan~\citeyear{1999_semirings_golan} for a classic overview of semiring
+applications. Dolan~\citeyear{2013_semirings_dolan} uses the semiring theory
+to implement graph algorithms.}.
 This provides a convenient framework for proving the above properties using equational
 reasoning, and is generally useful for formal verification, as well as automated testing
 of graph library APIs, e.g. by using QuickCheck~\cite{2011_quickcheck_claessen}.
@@ -607,7 +608,7 @@ respectively. Then:
 \]
 
 \noindent
-Furthermore, the idempotence of $+$ also follows from the decomposition, which
+Furthermore, the idempotence of $+$ can also be proved from the decomposition, which
 leads to the following \emph{minimal set of axioms that characterise algebraic graphs}:
 
 \begin{itemize}
@@ -625,15 +626,15 @@ leads to the following \emph{minimal set of axioms that characterise algebraic g
 
 We require all \hs{Graph} instances to satisfy these 8 axioms. Our definition
 of graph construction primitives in~\S\ref{sub-constructing} does satisfy them
-all and is therefore a valid \hs{Graph} instance, which we will implement
-in~\S\ref{sub-instances}. There are many other useful instances and we will discuss
-them in~\S\ref{sec-a-la-carte}. Some of them satisfy additional
+all and is therefore a valid \hs{Graph} instance. We will provide an
+implementation for this and other useful instances in~\S\ref{sec-a-la-carte}.
+Some of them will satisfy additional
 axioms, for example, by making the connect $\rightarrow$ operation commutative,
 we obtain undirected graphs.
 
 Algebraic graphs are \emph{complete} in the sense that it is possible to describe
 any graph using the core interface. Indeed, given a graph $(V,E)$ we can construct
-it as \hs{graph@$\,V\,E$@} where function \hs{graph} is defined as follows.
+it as \hs{graph@$\,V\,E$@}, where the function \hs{graph} is defined as follows.
 
 \begin{minted}{haskell}
 graph :: Graph g => [Vertex g] -> [(Vertex g, Vertex g)] -> g
@@ -653,10 +654,10 @@ $x \rightarrow y + x + y = x \rightarrow y$, which in particular states that
 an edge $(u,v)$ contains its two vertices $\{u,v\}$ and is inseparable
 from them. Therefore, if the pair $(V,E)$ is inconsistent, the set of vertices of
 the resulting graph will be expanded to $\hat{V}$ so that
-$E\subseteq \hat{V}\times \hat{V}$ holds. More generally,
-in addition to being complete, the algebraic graph API is also \emph{sound} in
-the sense that it is impossible to construct an inconsistent pair $(V,E)$
-using the four \hs{Graph} methods.
+$E\subseteq \hat{V}\times \hat{V}$ holds. More generally, the absorption
+theorem states that in addition to being complete, the algebraic graph
+API is also \emph{sound} in the sense that it is impossible to construct
+an inconsistent pair $(V,E)$ using the four \hs{Graph} methods.
 
 The following theorems can be proved from the minimal set of axioms:
 
@@ -705,13 +706,13 @@ isSubgraphOf :: (Graph g, Eq g) => g -> g -> Bool
 isSubgraphOf x y = overlay x y == y
 \end{minted}
 
-The following theorems can be proved:
+The following theorems about the partial order on graphs can be proved:
 
 \begin{itemize}
-    \item Lower bound: $\varepsilon \subseteq x$.
+    \item Least element: $\varepsilon \subseteq x$.
     \item Overlay order: $x \subseteq x + y$.
     \item Overlay-connect order: $x + y \subseteq x \rightarrow y$.
-    \item Order consistency: $x \subseteq y \Rightarrow (x + z \subseteq y + z)
+    \item Monotony: $x \subseteq y \Rightarrow (x + z \subseteq y + z)
     \wedge (x \rightarrow z \subseteq y \rightarrow z)
     \wedge (z \rightarrow x \subseteq z \rightarrow y)$.
 
@@ -745,7 +746,7 @@ we make the inductive hypothesis (*) that
 \hs{vertices (h:t)} & = & \hs{@\std{foldr}@ overlay empty (@\std{map}@ vertex (h:t))} & \text{(definition of \hs{vertices})}\\
  & = & \hs{@\std{foldr}@ overlay empty (vertex h : @\std{map}@ vertex t)} & \text{(definition of }\hs{@\std{map}@}\text{)}\\
  & = & \hs{overlay (vertex h) (vertices t)} & \text{(definition of }\hs{@\std{foldr}@}\text{)}\\
- & \subseteq & \hs{overlay (vertex h) (clique t)} & \text{(order consistency and *)}\\
+ & \subseteq & \hs{overlay (vertex h) (clique t)} & \text{(monotony and *)}\\
  & \subseteq & \hs{connect (vertex h) (clique t)} & \text{(overlay-connect order)}\\
  & = & \hs{@\std{foldr}@ connect empty (vertex h : @\std{map}@ vertex t)} & \text{(definition of }\hs{@\std{foldr}@}\text{)}\\
  & = & \hs{@\std{foldr}@ connect empty (@\std{map}@ vertex (h:t))} & \text{(definition of }\hs{@\std{map}@}\text{)}\\
