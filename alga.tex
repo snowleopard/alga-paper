@@ -758,8 +758,15 @@ we make the inductive hypothesis (*) that
 This completes our proof: \hs{vertices xs} $\ \subseteq\ $ \hs{clique xs}
 holds in all possible cases.
 
-% \subsection{Automated testing}\label{sub-testing}
-% arbitrary
+\subsection{Automated testing}\label{sub-testing}
+
+Theorem provers, such as Liquid Haskell~\cite{2016_vazou_liquid},
+can substantially reduce the effort required for formal verification,
+however, automated testing remains an effective and pervasively used
+method for formulating and testing functional properties. In Haskell,
+the go-to tool for automated testing is QuickCheck developed by
+Claessen and Hughes~\citeyear{2011_quickcheck_claessen}.
+
 
 \section{Graphs \`{a} la carte}\label{sec-a-la-carte}
 
