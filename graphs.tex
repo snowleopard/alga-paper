@@ -274,7 +274,7 @@ Just [3,1,2]
 Nothing
 \end{minted}
 
-\subsection{Undirected graphs}
+\subsection{Undirected graphs}\label{sub-undirected}
 
 As hinted in \S\ref{sub-laws}, to switch from directed to undirected graphs it
 is sufficient to add the axiom of commutativity for the connect operator. For
@@ -321,15 +321,18 @@ instance Ord a => Eq (Undirected a) where
     U x == U y = symmetricClosure x == symmetricClosure y
 
 symmetricClosure :: Ord a => Relation a -> Relation a
-symmetricClosure = ... -- orient edges canonically or make them bidirectional
+symmetricClosure = ... -- direct edges canonically or make them bidirectional
 \end{minted}
+
+Note that algebraic expressions of undirected graphs have the canonical form where all
+edges are directed in a canonical order, e.g. according to some total order on vertices.
 
 Let's test that the custom equality works as desired:
 \begin{minted}[frame=single]{haskell}
 @\ghci @quickCheck (axioms :: GraphTestsuite (Undirected Int))
 +++ OK, passed 100 tests.
 
-@\ghci @quickCheck $ \x y -> x * y == y * (x :: Undirected Int)
+@\ghci @quickCheck $ \x y -> x * y == (y * x :: Undirected Int)
 +++ OK, passed 100 tests.
 
 @\ghci @clique "abcd" == (clique "dcba" :: Relation Char)
@@ -340,4 +343,137 @@ True
 \end{minted}
 
 As you can see, the polymorphic graph construction functions, such as \hs{clique},
-can be safely used when working with undirected graphs.
+can be safely used when working with undirected graphs. We can define a subclass
+\hs{class Graph g => UndirectedGraph g} and use the \hs{UndirectedGraph g}
+constraint for functions that rely on the commutativity of the \hs{connect} method.
+
+\subsection{Reflexive and irreflexive graphs}
+
+A graph is \emph{reflexive} if every vertex is connected to itself, i.e. has a self-loop.
+An example of a reflexive graph is the graph corresponding to the partial
+order relation $\subseteq$ on graphs: indeed, $x \subseteq x$ holds for all $x$. To
+represent reflexive graphs algebraically we can introduce the following axiom:
+
+\begin{itemize}
+    \item $v = v \rightarrow v$, where $v\in \mathbb{V}$ is a vertex.
+\end{itemize}
+
+\noindent
+The axiom corresponds to an additional \hs{Graph} type class law:
+\hs{vertex x} = \hs{connect (}\hs{vertex x) (}\hs{vertex x)}.
+
+One way to look at the axiom is that it enforces that each vertex has a self-loop. However,
+there is another equally valid perspective, which corresponds to the reverse application
+of the equality, wherein the axiom states that there are no self-loops! This may seem like an
+internal contradiction of the theory, but in fact this simply indicates the isomorphism
+between reflexive and \emph{irreflexive} graphs: you can always
+turn a reflexive graph into the corresponding irreflexive one by deleting the self-loops,
+and vice versa.
+
+One can implement the reflexive and/or irreflexive \hs{Graph} instance very similarly to
+the \hs{Undirected} implementation presented in~\S\ref{sub-undirected}: simply wrap
+\hs{Relation} into a \hs{newtype} and give it a custom \hs{Eq} instance based on the
+\hs{reflexiveClosure}.
+
+We can define
+\hs{class Graph g => ReflexiveGraph g} and \hs{class Graph g => IrreflexiveGraph g}
+to increase the type safety of functions that rely on the additional axiom. It seems
+strange to have two different type classes with exactly the same methods and laws, but
+it may be useful to distinguish their semantics.
+
+\subsection{Transitively closed graphs}
+
+In many applications graphs satisfy the \emph{transitivity} property: if a vertex $x$ is
+connected to $y$, and $y$ is connected to $z$, then the edge between $x$ and $z$ can be
+added or removed without changing the semantics of the graph. A common example is
+\emph{dependency graphs} or \emph{partial orders} --- the semantics of such graphs is
+typically their \emph{transitive closure}.
+To describe this class of graphs algebraically we add the following \emph{closure} axiom:
+
+\begin{itemize}
+    \item Closure: $y \neq \varepsilon \Rightarrow x \rightarrow y + y \rightarrow z +
+    x \rightarrow z = x \rightarrow y + y \rightarrow z$.
+\end{itemize}
+
+By using the axiom one can rewrite a graph expression into its transitive closure or,
+alternatively, into its \emph{transitive reduction}, hence all graphs that differ only in the
+existence of some transitive edges are forced into the same equivalence class. Note that the
+precondition $y \neq \varepsilon$ is necessary as otherwise $+$ and $\rightarrow$ can no
+longer be distinguished:
+\[
+x \rightarrow z = x \rightarrow \varepsilon \rightarrow z = x \rightarrow \varepsilon
+ + \varepsilon \rightarrow z + x \rightarrow z = x \rightarrow \varepsilon
+ + \varepsilon \rightarrow z = x + z.
+\]
+
+It is interesting to note that $+$ and $\rightarrow$ have a simple meaning for transitively
+closed graphs: they correspond to the \emph{parallel} and \emph{sequential composition},
+respectively. This allows to algebraically describe concurrent systems, which was one
+of the original motivations behind the research on algebraic graphs.
+
+We can implement a \hs{Graph} instance for transitively closed graphs by wrapping
+\hs{Relation} in a \hs{newtype} with a custom equality function, which given two
+graphs compares the transitive closures of the underlying relations.
+
+The above implementation permits cycles in graphs, therefore the resulting equivalence
+classes correspond to \emph{preorders}. For example, $(1 + 2 + 3) \rightarrow (2 + 3 + 4)$
+is a preorder with vertices 2 and 3 forming a \emph{strongly-connected component}. By
+finding all strongly-connected components in the graph (e.g. by using the function \hs{scc}
+from the \textsf{containers} library) we can derive the following \emph{graph condensation}:
+$\{1\} \rightarrow \{2, 3\} \rightarrow \{4\}$. One way to interpret this preorder as a
+dependency graph is that tasks 2 and 3 are executed as a step,
+simultaneously, and that they both depend on task 1, and are required for task 4.
+
+A subclass \hs{class Graph g => TransitiveGraph g} can be defined to distinguish
+algebraic graphs with the closure axiom from others.
+
+\subsection{Hypergraphs}
+
+As described in~\S\ref{sub-relation}, the decomposition axiom collapses an algebraic
+graph expression into a collection of vertices and pairs of vertices, i.e. graphs. By replacing
+the decomposition axiom with \emph{3-decomposition}, we obtain \emph{hypergraphs} comprising
+vertices, edges and \emph{3-edges} (triples of vertices):
+
+\begin{itemize}
+    \item 3-decomposition: $w \rightarrow x \rightarrow y \rightarrow z =
+    w \rightarrow x \rightarrow y + w \rightarrow x \rightarrow z +
+    w \rightarrow y \rightarrow z + x \rightarrow y \rightarrow z$.
+\end{itemize}
+
+To better understand the difference between the (2-)decomposition and 3-decomposition
+axioms, let's substitute~$\varepsilon$ for $w$ in the 3-decomposition and simplify:
+\[
+x \rightarrow y \rightarrow z = x \rightarrow y + x \rightarrow z + y \rightarrow z
++ x \rightarrow y \rightarrow z.
+\]
+Looks familiar? This is almost the 2-decomposition axiom! Yet there is no way to get rid
+of the term $x \rightarrow y \rightarrow z$ on the right-hand side: indeed, a triple is
+unbreakable
+in this algebra, and one can only extract the pairs (edges) that are embedded in it.
+In fact, we can take this further and rewrite the above expression to also expose the
+embedded vertices:
+\[
+x \rightarrow y \rightarrow z = x + y + z + x \rightarrow y + x \rightarrow z
++ y \rightarrow z + x \rightarrow y \rightarrow z.
+\]
+Note that with 2-decomposition we can achieve something similar via the absorption theorem:
+\[
+x \rightarrow y = x + y + x \rightarrow y.
+\]
+This can be taken further by defining 4-decomposition and so forth, creating a hierarchy
+of algebraic structures.
+
+Since every graph is also a hypergraph, we can define a superclass
+\hs{class HyperGraph g => Graph g}, moving all \hs{Graph} methods to the superclass, and
+leaving only the decomposition axiom in \hs{Graph}, as the law that distinguishes it from
+\hs{HyperGraph}.
+
+\subsection{Summary}
+
+In this section we have defined a family of graph instances and their classes that are all
+build on the same algebraic core. The additional axioms that characterise these classes
+can be mixed in various combinations. For example, the algebra of undirected, reflexive
+and transitively closed graphs describes the laws of equivalence relations.
+
+In the next section we present a library of basic graph transformation algorithms that
+can be reused by all instances discussed in this section.
