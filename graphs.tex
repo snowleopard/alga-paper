@@ -273,3 +273,71 @@ Just [3,1,2]
 @\ghci @topSort $ 1 * 2 + 2 * 1
 Nothing
 \end{minted}
+
+\subsection{Undirected graphs}
+
+As hinted in \S\ref{sub-laws}, to switch from directed to undirected graphs it
+is sufficient to add the axiom of commutativity for the connect operator. For
+undirected graphs it makes sense to denote the connect operation by $\leftrightarrow$ or
+\textemdash, hence:
+
+\begin{itemize}
+    \item $\leftrightarrow$ is commutative: $x \leftrightarrow y = y \leftrightarrow x$.
+\end{itemize}
+
+Curiously, with the introduction of this axiom, the associativity of $\leftrightarrow$
+follows from the left-associated version of the decomposition axiom and the
+commutativity of $+$:
+\[
+\begin{array}{rcll}
+(x \leftrightarrow y) \leftrightarrow z & = & x \leftrightarrow y + x \leftrightarrow z + y \leftrightarrow z & \text{(left decomposition)}\\
+ & = & y \leftrightarrow z + y \leftrightarrow x + z \leftrightarrow x & \text{(commutativity of $+$ and $\leftrightarrow$)}\\
+ & = &  (y \leftrightarrow z) \leftrightarrow x & \text{(left decomposition)}\\
+ & = &   x \leftrightarrow (y \leftrightarrow z) & \text{(commutativity of $\leftrightarrow$)}\\
+\end{array}
+\]
+
+Therefore, \emph{the minimal set of axioms of undirected graphs} comprises only 6 axioms:
+
+\begin{itemize}
+    \item $+$ is commutative and associative: $x + y = y + x$ and
+    $x + (y + z) = (x + y) + z$.
+    \item $\leftrightarrow$ is commutative $x \leftrightarrow y = y \leftrightarrow x$ and
+    has $\varepsilon$ is the identity: $x \leftrightarrow \varepsilon = x$.
+    \item Distributivity:
+    $x \leftrightarrow (y + z) = x \leftrightarrow y + x \leftrightarrow z$.
+    \item Left decomposition: $(x \leftrightarrow y) \leftrightarrow z =
+    x \leftrightarrow y + x \leftrightarrow z + y \leftrightarrow z$.
+\end{itemize}
+
+Commutativity of the connect operator forces graph expressions that differ only
+in the direction of edges into the same equivalence class. One can implement
+this by the \emph{symmetric closure} of the underlying relation:
+
+\begin{minted}{haskell}
+newtype Undirected a = U (Relation a) deriving (Arbitrary, Graph, Num, Show)
+
+instance Ord a => Eq (Undirected a) where
+    U x == U y = symmetricClosure x == symmetricClosure y
+
+symmetricClosure :: Ord a => Relation a -> Relation a
+symmetricClosure = ... -- orient edges canonically or make them bidirectional
+\end{minted}
+
+Let's test that the custom equality works as desired:
+\begin{minted}[frame=single]{haskell}
+@\ghci @quickCheck (axioms :: GraphTestsuite (Undirected Int))
++++ OK, passed 100 tests.
+
+@\ghci @quickCheck $ \x y -> x * y == y * (x :: Undirected Int)
++++ OK, passed 100 tests.
+
+@\ghci @clique "abcd" == (clique "dcba" :: Relation Char)
+False
+
+@\ghci @clique "abcd" == (clique "dcba" :: Undirected Char)
+True
+\end{minted}
+
+As you can see, the polymorphic graph construction functions, such as \hs{clique},
+can be safely used when working with undirected graphs.
