@@ -4,9 +4,10 @@
 In this section we define several useful \hs{Graph} instances, and
 show that the algebra presented in the previous section~\S\ref{sec-algebra} is
 not restricted only
-to directed graphs, but can be extended to axiomatically represent undirected,
-reflexive, transitively closed, and labelled graphs, their various
-combinations, and even hypergraphs.
+to directed graphs, but can be extended to axiomatically represent
+undirected~(\S\ref{sub-undirected}), reflexive~(\S\ref{sub-reflexive})
+and transitive~(\S\ref{sub-transitive}) graphs, their various combinations,
+and even hypergraphs~(\S\ref{sub-hypergraphs}).
 
 \begin{figure}[b]
 \vspace{-3mm}
@@ -16,17 +17,17 @@ import qualified Data.Set as Set (empty)
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
-data Relation a = Relation { domain :: Set a, relation :: Set (a, a) } deriving (Eq, Show)
+data Relation a = R { domain :: Set a, relation :: Set (a, a) } deriving (Eq, Show)
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
 instance Ord a => Graph (Relation a) where
     type Vertex (Relation a) = a
-    empty       = Relation Set.empty Set.empty
-    vertex  x   = Relation (singleton x) Set.empty
-    overlay x y = Relation (domain x `union` domain y) (relation x `union` relation y)
-    connect x y = Relation (domain x `union` domain y) (relation x `union` relation y
-        `union` fromAscList [ (a, b) | a <- elems (domain x), b <- elems (domain y) ])
+    empty       = R Set.empty Set.empty
+    vertex  x   = R (singleton x) Set.empty
+    overlay x y = R (domain x `union` domain y) (relation x `union` relation y)
+    connect x y = R (domain x `union` domain y) (relation x `union` relation y `union`
+        fromAscList [ (a, b) | a <- elems (domain x), b <- elems (domain y) ])
 \end{minted}
 \vspace{-3mm}
 \caption{Implementing the \hs{Graph} type class by a binary relation
@@ -38,7 +39,7 @@ defined in~\S\ref{sub-constructing}\label{fig-relation}}
 \subsection{Binary relation}\label{sub-relation}
 
 We start by a direct encoding of the graph construction primitives defined
-in~\S\ref{sub-constructing} into the \hs{Relation} data type isomorphic
+in~\S\ref{sub-constructing} into the abstract data type \hs{Relation} isomorphic
 to a pair of sets $(V,E)$, see Fig.~\ref{fig-relation}. As we have seen,
 this implementation satisfies the axioms of the graph algebra. Furthermore, it
 is a \emph{free graph} in the sense that it does not satisfy any other laws.
@@ -53,8 +54,8 @@ where $V_g$ is the set of vertices that appear in $g$, and $(u,v)\in E_g$ if
 vertices $u$ and $v$ appear in the left-hand and right-hand arguments of
 the connect operation $\rightarrow$ at least once (and should thus be connected
 by an edge). The canonical form of an
-expression $g$ can be represented as \hs{Relation@$\,\,V_g\,E_g$@},
-and any additional law on \hs{Relation} would violate the canonicity property.
+expression $g$ can be represented as \hs{R@$\,\,V_g\,E_g$@}, and any additional
+law on \hs{Relation} would therefore violate the canonicity property.
 The existence of the canonical form has been proved by~\citet{2014_algebra_mokhov}
 for an extended version of the algebra. The proof fundamentally builds on the
 decomposition axiom: one can apply it repeatedly to an expression, breaking up
@@ -86,7 +87,7 @@ We can now play with graphs and binary relations using the interactive GHC:
 
 \begin{minted}[frame=single]{haskell}
 @\ghci@ 1 * (2 + 3) :: Relation Int
-Relation {domain = fromList [1,2,3], relation = fromList [(1,2),(1,3)]}
+R {domain = fromList [1,2,3], relation = fromList [(1,2),(1,3)]}
 @\ghci@ 1 * (2 + 3) + 2 * 3 == (clique [1..3] :: Relation Int)
 True
 @\ghci@ 1 * 2 == (2 * 1 :: Relation Int)
@@ -103,8 +104,9 @@ of any type \hs{@\blk{a}@} that satisfies the~\hs{Ord@\,\,\blk{a}@} constraint.
 
 \subsection{Deep embedding}\label{sub-embedding}
 
-By embedding the core graph construction primitives into a basic algebraic data type
-we obtain the following simple \hs{Graph} instance:
+By embedding the core graph construction primitives into an algebraic data type \hs{Expr}
+we obtain the following \hs{Graph} instance (it is tempting to name the data type
+\hs{Graph} instead of \hs{Expr}, but that will likely cause confusion):
 
 \begin{minted}{haskell}
 data Expr a = Empty | Vertex a | Overlay (Expr a) (Expr a) | Connect (Expr a) (Expr a)
@@ -147,7 +149,7 @@ instance Ord a => Eq (Expr a) where
 An interesting feature of the \hs{Expr} instance is that it allows to represent
 densely connected graphs more compactly. For example, \hs{clique [1..n] :: Expr Int}
 has a linear-size representation in memory, while \hs{clique [1..n] :: Relation Int}
-stores each edge separately and therefore uses $O(n^2)$ memory. Exploiting the
+stores each edge separately and therefore requires $O(n^2)$ memory. Exploiting the
 compact graph representation for deriving algorithms that are asymptotically faster
 on dense graphs, compared to conventional algorithms operating on `uncompressed'
 graph representations isomorphic to $(V,E)$, is outside the scope of this paper,
@@ -180,24 +182,25 @@ instance Ord a => Graph (AdjacencyMap a) where
 \vspace{-1mm}
 \end{figure}
 
-\subsection{Adjacency map and topological sort}\label{sub-adjacency-map}
+\subsection{Adjacency map, depth-first search, and topological sort}\label{sub-adjacency-map}
 
 In this subsection we show how to reuse existing graph libraries, such as
 \textsf{containers} and \textsf{fgl}, by wrapping them into the algebraic
-graph API. More specifically, we show how to reuse the efficient implementation of
-the \emph{topological sort} algorithm developed by~\citet{1995_king_graphs}.
+graph API. More specifically, we show how to reuse the efficient implementations
+of the \emph{depth-first search} and \emph{topological sort} algorithms developed by~\citet{1995_king_graphs}.
 
 The interface of the \textsf{containers} library uses the \emph{adjacency list}
 representation of graphs and we therefore define a new \hs{Graph} instance that
 provides the closest match, see Fig.~\ref{fig-adjacency-map}. In our experiments
 this instance is often faster than \hs{Relation} because of more efficient
-sharing of common subgraphs in memory, see~\S\ref{sub-benchmarks}.
+sharing of common subgraphs in memory, see benchmarks in~\S\ref{sub-benchmarks}.
 
 The \hs{AdjacencyMap} instance is parametric and in order to use the
 functions provided by \textsf{containers}, we need to map the graph vertices
 into contiguous subsets of integers \hs{Int}. This can be done by the function
-\hs{graphFromEdges} defined in \textsf{containers} that requires an adjacency list as
-the input. We can obtain the adjacency list from \hs{AdjacencyMap} as follows:
+\hs{graphFromEdges} provided by \textsf{containers} that requires an adjacency
+list as the input. We can obtain the adjacency list from \hs{AdjacencyMap} as
+follows:
 
 \begin{minted}{haskell}
 adjacencyList :: AdjacencyMap a -> [(a, [a])]
@@ -227,13 +230,35 @@ showcase \hs{adjacencyList} and \hs{edgeList}:
 [('a','b'),('b','c')]
 \end{minted}
 
-We can now build safe bridges to \textsf{containers} and \textsf{fgl}. Consider
-the following wrapper\footnote{We use \textsf{GeneralizedNewtypeDeriving} GHC
+We can now build bridges to \textsf{containers} and \textsf{fgl}. For example,
+the following functions provide a safe and parametric interface to depth-first
+search and topological sort algorithms performing the necessary plumbing:
+
+\begin{minted}{haskell}
+dfs     :: Ord a => AdjacencyMap a -> Forest a
+topSort :: Ord a => AdjacencyMap a -> Maybe [a]
+\end{minted}
+
+\noindent
+Note the return type of \hs{topSort}: the function returns \hs{Nothing}
+if a topological sort does not exist because the graph is cyclic; otherwise it
+returns a list of vertices in the topological order, as demonstrated below.
+
+\begin{minted}[frame=single]{haskell}
+@\ghci @topSort $ 1 * 2 + 3 * 1
+Just [3,1,2]
+
+@\ghci @topSort $ 1 * 2 + 2 * 1
+Nothing
+\end{minted}
+
+Consider the following interesting
+wrapper\footnote{We use \textsf{GeneralizedNewtypeDeriving} GHC
 extension to derive \hs{Arbitrary}, \hs{Graph} and \hs{Num} instances. Note that
 the current version of GHC does not support the extension for classes
 with associated types, such as \hs{Graph}, but the feature has already been
-implemented and will be available in the next GHC release. Until then
-one needs to write the trivial \hs{Graph} instance manually.}
+implemented (ticket \#8165) and will be available in the next GHC release.
+Until then one needs to write the trivial \hs{Graph} instance manually.}
 around \hs{AdjacencyMap}:
 
 \begin{minted}{haskell}
@@ -242,44 +267,24 @@ newtype TopSort a = TS (AdjacencyMap a) deriving (Arbitrary, Graph, Num, Show)
 \vspace{1mm}
 \begin{minted}{haskell}
 instance Ord a => Eq (TopSort a) where
-    x == y = topSort x == topSort y
-\end{minted}
-\vspace{1mm}
-\begin{minted}{haskell}
-topSort :: Ord a => TopSort a -> Maybe [a]
-topSort = ... -- call Data.Graph.topSort via Data.Graph.graphFromEdges
+    TS x == TS y = topSort x == topSort y
 \end{minted}
 
 \noindent
 The \hs{TopSort} instance differs from \hs{AdjacencyMap} only in one aspect: it uses
 a custom equality test, which satisfies more laws than required by the \hs{Graph}
 instance. Indeed, there are many pairs of different graphs, whose topological sorts
-coincide, e.g. \hs{topSort (1 + 2)} = \hs{topSort (1 * 2)} = \hs{Just [1,2]}.
-
-We do not show the implementation of the \hs{topSort} function here, as it is not
-particularly interesting and involves low-level plumbing, however we would like to
-emphasise that the resulting interface is fully parametric and safe. Note the
-return type of \hs{topSort}: the function returns \hs{Nothing}
-if a topological sort does not exist because the graph is cyclic; otherwise it
-returns a list of vertices in the topological order, as demonstrated below:
-
-\begin{minted}[frame=single]{haskell}
-@\ghci @quickCheck (axioms :: GraphTestsuite (TopSort Int))
-@\blk{+++ OK, passed 100 tests.}@
-
-@\ghci @topSort $ 1 * 2 + 3 * 1
-Just [3,1,2]
-
-@\ghci @topSort $ 1 * 2 + 2 * 1
-Nothing
-\end{minted}
+coincide, e.g. \hs{topSort (1 + 2)} $=$ \hs{topSort (1 * 2)} $=$ \hs{Just [1,2]}.
+A similar \hs{newtype Dfs} wrapper can be created for the depth-first search
+algorithm. It will also trivially satisfy the \hs{Graph} axioms, but will have
+a different equivalence relation, since \hs{dfs (1 + 2)} $\neq$ \hs{dfs (1 * 2)}.
 
 \subsection{Undirected graphs}\label{sub-undirected}
 
 As hinted in \S\ref{sub-laws}, to switch from directed to undirected graphs it
-is sufficient to add the axiom of commutativity for the connect operator. For
-undirected graphs it makes sense to denote the connect operation by $\leftrightarrow$ or
-\textemdash, hence:
+is sufficient to add the axiom of commutativity for the connect operation. For
+undirected graphs it is natural to denote the connect by $\leftrightarrow$ or
+\textemdash:
 
 \begin{itemize}
     \item $\leftrightarrow$ is commutative: $x \leftrightarrow y = y \leftrightarrow x$.
@@ -297,7 +302,8 @@ commutativity of $+$:
 \end{array}
 \]
 
-Therefore, \emph{the minimal set of axioms of undirected graphs} comprises only 6 axioms:
+Therefore, \emph{the minimal algebraic characterisation of undirected graphs}
+comprises only 6 axioms:
 
 \begin{itemize}
     \item $+$ is commutative and associative: $x + y = y + x$ and
@@ -315,10 +321,10 @@ in the direction of edges into the same equivalence class. One can implement
 this by the \emph{symmetric closure} of the underlying relation:
 
 \begin{minted}{haskell}
-newtype Undirected a = U (Relation a) deriving (Arbitrary, Graph, Num, Show)
+newtype Symmetric a = S (Relation a) deriving (Arbitrary, Graph, Num, Show)
 
-instance Ord a => Eq (Undirected a) where
-    U x == U y = symmetricClosure x == symmetricClosure y
+instance Ord a => Eq (Symmetric a) where
+    S x == S y = symmetricClosure x == symmetricClosure y
 
 symmetricClosure :: Ord a => Relation a -> Relation a
 symmetricClosure = ... -- direct edges canonically or make them bidirectional
@@ -329,25 +335,26 @@ edges are directed in a canonical order, e.g. according to some total order on v
 
 Let's test that the custom equality works as desired:
 \begin{minted}[frame=single]{haskell}
-@\ghci @quickCheck (axioms :: GraphTestsuite (Undirected Int))
-+++ OK, passed 100 tests.
+@\ghci @quickCheck (axioms :: GraphTestsuite (Symmetric Int))
+@\blk{+++ OK, passed 100 tests.}@
 
-@\ghci @quickCheck $ \x y -> x * y == (y * x :: Undirected Int)
-+++ OK, passed 100 tests.
+@\ghci @quickCheck $ \x y -> x * y == (y * x :: Symmetric Int)
+@\blk{+++ OK, passed 100 tests.}@
 
 @\ghci @clique "abcd" == (clique "dcba" :: Relation Char)
 False
 
-@\ghci @clique "abcd" == (clique "dcba" :: Undirected Char)
+@\ghci @clique "abcd" == (clique "dcba" :: Symmetric Char)
 True
 \end{minted}
 
 As you can see, the polymorphic graph construction functions, such as \hs{clique},
 can be safely used when working with undirected graphs. We can define a subclass
-\hs{class Graph g => UndirectedGraph g} and use the \hs{UndirectedGraph g}
+\hs{class Graph@\,\,\blk{g}@ => UndirectedGraph@\,\,\blk{g}@} and use the
+\hs{UndirectedGraph@\,\,\blk{g}@}
 constraint for functions that rely on the commutativity of the \hs{connect} method.
 
-\subsection{Reflexive and irreflexive graphs}
+\subsection{Reflexive and irreflexive graphs}\label{sub-reflexive}
 
 A graph is \emph{reflexive} if every vertex is connected to itself, i.e. has a self-loop.
 An example of a reflexive graph is the graph corresponding to the partial
@@ -355,11 +362,11 @@ order relation $\subseteq$ on graphs: indeed, $x \subseteq x$ holds for all $x$.
 represent reflexive graphs algebraically we can introduce the following axiom:
 
 \begin{itemize}
-    \item $v = v \rightarrow v$, where $v\in \mathbb{V}$ is a vertex.
+    \item Self-loop: $v = v \rightarrow v$, where $v\in \mathbb{V}$ is a vertex.
 \end{itemize}
 
 \noindent
-The axiom corresponds to an additional \hs{Graph} type class law:
+The self-loop axiom corresponds to the additional \hs{Graph} law:
 \hs{vertex x} = \hs{connect (}\hs{vertex x) (}\hs{vertex x)}.
 
 One way to look at the axiom is that it enforces that each vertex has a self-loop. However,
@@ -370,18 +377,19 @@ between reflexive and \emph{irreflexive} graphs: you can always
 turn a reflexive graph into the corresponding irreflexive one by deleting the self-loops,
 and vice versa.
 
-One can implement the reflexive and/or irreflexive \hs{Graph} instance very similarly to
-the \hs{Undirected} implementation presented in~\S\ref{sub-undirected}: simply wrap
-\hs{Relation} into a \hs{newtype} and give it a custom \hs{Eq} instance based on the
-\hs{reflexiveClosure}.
+One can implement the reflexive and irreflexive \hs{Graph} instances very similarly to
+the \hs{Symmetric} implementation presented in~\S\ref{sub-undirected}, by wrapping the
+\hs{Relation} into a \hs{newtype} and giving it a custom \hs{Eq} instance based on the
+\hs{reflexiveClosure} or \hs{irreflexiveClosure}, respectively.
 
 We can define
-\hs{class Graph g => ReflexiveGraph g} and \hs{class Graph g => IrreflexiveGraph g}
+\hs{class Graph@\,\,\blk{g}@ => ReflexiveGraph@\,\,\blk{g}@} and
+\hs{class Graph@\,\,\blk{g}@ => IrreflexiveGraph@\,\,\blk{g}@}
 to increase the type safety of functions that rely on the additional axiom. It seems
 strange to have two different type classes with exactly the same methods and laws, but
 it may be useful to distinguish their semantics.
 
-\subsection{Transitively closed graphs}
+\subsection{Transitive graphs}\label{sub-transitive}
 
 In many applications graphs satisfy the \emph{transitivity} property: if a vertex $x$ is
 connected to $y$, and $y$ is connected to $z$, then the edge between $x$ and $z$ can be
@@ -399,35 +407,46 @@ By using the axiom one can rewrite a graph expression into its transitive closur
 alternatively, into its \emph{transitive reduction}, hence all graphs that differ only in the
 existence of some transitive edges are forced into the same equivalence class. Note that the
 precondition $y \neq \varepsilon$ is necessary as otherwise $+$ and $\rightarrow$ can no
-longer be distinguished:
+longer be distinguished, which is clearly undesired:
 \[
 x \rightarrow z = x \rightarrow \varepsilon \rightarrow z = x \rightarrow \varepsilon
  + \varepsilon \rightarrow z + x \rightarrow z = x \rightarrow \varepsilon
  + \varepsilon \rightarrow z = x + z.
 \]
 
-It is interesting to note that $+$ and $\rightarrow$ have a simple meaning for transitively
-closed graphs: they correspond to the \emph{parallel} and \emph{sequential composition},
-respectively. This allows to algebraically describe concurrent systems, which was one
-of the original motivations behind the research on algebraic graphs.
+It is interesting to note that $+$ and $\rightarrow$ have simple meanings for transitive
+graphs: they correspond to the \emph{parallel} and \emph{sequential composition},
+respectively. This allows to algebraically describe concurrent systems, which was
+the original motivation behind the research on algebraic graphs.
 
-We can implement a \hs{Graph} instance for transitively closed graphs by wrapping
-\hs{Relation} in a \hs{newtype} with a custom equality function, which given two
-graphs compares the transitive closures of the underlying relations.
+We can implement a \hs{Graph} instance for transitive graphs by wrapping
+\hs{Relation} in a \hs{newtype Transitive} with a custom equality test that
+compares the transitive closures of the underlying relations.
 
-The above implementation permits cycles in graphs, therefore the resulting equivalence
-classes correspond to \emph{preorders}. For example, $(1 + 2 + 3) \rightarrow (2 + 3 + 4)$
+The presented algebraic characterisation permits cycles in graphs, therefore the
+resulting equivalence classes correspond to \emph{preorders}. For example,
+$(1 + 2 + 3) \rightarrow (2 + 3 + 4)$
 is a preorder with vertices 2 and 3 forming a \emph{strongly-connected component}. By
-finding all strongly-connected components in the graph (e.g. by using the function \hs{scc}
-from the \textsf{containers} library) we can derive the following \emph{graph condensation}:
+finding all strongly-connected components in the graph (e.g. by utilising the
+function \hs{scc} from the \textsf{containers} library) we can derive the
+following \emph{graph condensation}:
 $\{1\} \rightarrow \{2, 3\} \rightarrow \{4\}$. One way to interpret this preorder as a
 dependency graph is that tasks 2 and 3 are executed as a step,
-simultaneously, and that they both depend on task 1, and are required for task 4.
+simultaneously, and that they both depend on task 1, and are prerequisite for task 4.
 
-A subclass \hs{class Graph g => TransitiveGraph g} can be defined to distinguish
+A subclass \hs{class Graph@\,\,\blk{g}@ => TransitiveGraph@\,\,\blk{g}@} can be defined to distinguish
 algebraic graphs with the closure axiom from others.
 
-\subsection{Hypergraphs}
+\begin{figure}
+\centerline{\includegraphics[scale=0.105]{fig/3-decomposition.pdf}}
+\caption{3-decomposition:
+    $1 \rightarrow 2 \rightarrow 3 \rightarrow 4 =
+    1 \rightarrow 2 \rightarrow 3 + 1 \rightarrow 2 \rightarrow 4 +
+    1 \rightarrow 3 \rightarrow 4 + 2 \rightarrow 3 \rightarrow 4$
+    \label{fig-3-decomposition}}
+\end{figure}
+
+\subsection{Hypergraphs}\label{sub-hypergraphs}
 
 As described in~\S\ref{sub-relation}, the decomposition axiom collapses an algebraic
 graph expression into a collection of vertices and pairs of vertices, i.e. graphs. By replacing
@@ -440,7 +459,9 @@ vertices, edges and \emph{3-edges} (triples of vertices):
     w \rightarrow y \rightarrow z + x \rightarrow y \rightarrow z$.
 \end{itemize}
 
-To better understand the difference between the (2-)decomposition and 3-decomposition
+Fig.~\ref{fig-3-decomposition} illustrates the axiom by decomposing a tetrahedron
+into four 3-edges corresponding to its faces. To better understand the difference
+between the (2-)decomposition and 3-decomposition
 axioms, let's substitute~$\varepsilon$ for $w$ in the 3-decomposition and simplify:
 \[
 x \rightarrow y \rightarrow z = x \rightarrow y + x \rightarrow z + y \rightarrow z
@@ -461,19 +482,22 @@ Note that with 2-decomposition we can achieve something similar via the absorpti
 x \rightarrow y = x + y + x \rightarrow y.
 \]
 This can be taken further by defining 4-decomposition and so forth, creating a hierarchy
-of algebraic structures.
+of algebraic structures corresponding to hypergraphs of different ranks.
 
 Since every graph is also a hypergraph, we can define a superclass
-\hs{class HyperGraph g => Graph g}, moving all \hs{Graph} methods to the superclass, and
+\hs{class HyperGraph@\,\,\blk{g}@ => Graph@\,\,\blk{g}@}, moving all \hs{Graph} methods to the superclass, and
 leaving only the decomposition axiom in \hs{Graph}, as the law that distinguishes it from
 \hs{HyperGraph}.
 
 \subsection{Summary}
 
 In this section we have defined a family of graph instances and their classes that are all
-build on the same algebraic core. The additional axioms that characterise these classes
+build on the algebraic core presented in~\S\ref{sec-algebra}. The additional axioms
+that characterise these classes
 can be mixed in various combinations. For example, the algebra of undirected, reflexive
-and transitively closed graphs describes the laws of equivalence relations.
+and transitively closed graphs describes the laws of \emph{equivalence} relations and can be
+equipped with an
+efficient instance based on the \emph{disjoint set} data structure~\cite{1984_set_union_tarjan}.
 
 In the next section we present a library of basic graph transformation algorithms that
 can be reused by all instances discussed in this section.

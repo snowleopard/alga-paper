@@ -1,4 +1,180 @@
 %!TEX root = alga.tex
+\begin{figure}
+\begin{subfigure}[b]{0.27\linewidth}
+\begin{minted}[fontsize=\small]{haskell}
+class Graph g where
+    type Vertex g
+    empty   :: g
+    vertex  :: Vertex g -> g
+    overlay :: g -> g -> g
+    connect :: g -> g -> g
+\end{minted}
+\caption{The core type class}
+\end{subfigure}
+\hfill
+\hfill
+\vrule
+\hfill
+\hfill
+\begin{subfigure}[b]{0.68\linewidth}
+\begin{minted}[fontsize=\small]{haskell}
+vertices     :: Graph g => [Vertex g] -> g
+edge         :: Graph g => Vertex g -> Vertex g -> g
+edges        :: Graph g => [(Vertex g, Vertex g)] -> g
+graph        :: Graph g => [Vertex g] -> [(Vertex g, Vertex g)] -> g
+gen          :: (Graph g, Arbitrary (Vertex g)) => Gen g
+isSubgraphOf :: (Graph g, Eq g) => g -> g -> Bool
+\end{minted}
+\caption{Derived graph construction primitives and the subgraph relation}
+\end{subfigure}
+~\\
+~\\
+\begin{subfigure}[b]{0.49\linewidth}
+\begin{minted}[fontsize=\small]{haskell}
+domain       @\,\,@::@\,\,@Relation a -> Set a
+relation     @\,\,@::@\,\,@Relation a -> Set (a, a)
+adjacencyMap @\,\,@::@\,\,@AdjacencyMap a -> Map a (Set a)
+adjacencyList@\,\,@::@\,\,@AdjacencyMap a -> (a, [a])
+edgeList     @\,\,@::@\,\,@AdjacencyMap a -> [(a, a)]
+topSort      @\,\,@::@\,\,@AdjacencyMap a -> Maybe [a]
+dfs          @\,\,@::@\,\,@AdjacencyMap a -> Forest a
+\end{minted}
+\caption{Deconstructing/consuming graphs}
+\end{subfigure}
+\hfill
+\hfill
+\vrule
+\hfill
+\hfill
+\begin{subfigure}[b]{0.47\linewidth}
+\begin{minted}[fontsize=\small]{haskell}
+path   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g] -> g
+circuit@\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g] -> g
+clique @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g] -> g
+star   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Vertex g -> [Vertex g] -> g
+tree   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Tree (Vertex g) -> g
+forest @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Forest (Vertex g) -> g
+fold   @\,\,@::@\,\,@(Graph@\,\,\blk{g}@,@\,@Vertex@\,\,\blk{g}\,\teq@@\,\blk{a}@)@\,\,@=>@\,\,@Expr@\,\,\blk{a}\,\,@->@\,\,\blk{g}@
+\end{minted}
+\caption{Standard families of graphs and graph folding}
+\end{subfigure}
+~\\
+~\\
+\begin{subfigure}[b]{\linewidth}
+\begin{minted}[fontsize=\small]{haskell}
+transpose     :: Transpose g -> g
+gmap          :: Graph g => (a -> Vertex g) -> GraphFunctor a -> g
+mergeVertices :: Graph g => (Vertex g -> Bool) -> Vertex g -> GraphFunctor (Vertex g) -> g
+bind          :: Graph g => GraphMonad a -> (a -> g) -> g
+induce        :: Graph g => (Vertex g -> Bool) -> GraphMonad (Vertex g) -> g
+removeVertex  :: (Graph g, Eq (Vertex g)) => Vertex g -> GraphMonad (Vertex g) -> g
+splitVertex   :: (Graph g, Eq (Vertex g)) => Vertex g -> [Vertex g] -> GraphMonad (Vertex g) -> g
+removeEdge    :: (Graph g, Eq (Vertex g)) => Vertex g -> Vertex g -> GraphMonad (Vertex g) -> g
+box           :: (Graph g, Vertex g @\teq@ (u, v)) => GraphFunctor u -> GraphFunctor v -> g
+deBruijn      :: (Graph g, Vertex g @\teq@ [a]) => Int -> [a] -> g
+\end{minted}
+\caption{Polymorphic graph transformations}
+\end{subfigure}
+\vspace{-3mm}
+\caption{API of the graph transformation library\label{fig-api}}
+\end{figure}
+
+\newpage
 \section{Graph transformation library}\label{sec-transformations}
 
+In this section we demonstrate the flexibility of the algebraic graph core,
+and develop a graph transformation library whose API is summarised in
+Fig.~\ref{fig-api}. The parts of the API shown in Fig.~\ref{fig-api}(a-c)
+were defined in~\S\ref{sec-algebra} and~\S\ref{sec-a-la-carte}.
+
+\subsection{Standard families of graphs}\label{sub-families}
+
+This subsection defines a few simple functions for constructing graphs from
+standard graph families. An example is the family of \emph{clique} graphs that has
+already been covered in \S\ref{sec-algebra}, where we defined the function
+\hs{clique}. See Fig.~\ref{fig-api}(d) for the list of all functions we define.
+
+A \emph{path} on a list of vertices can be constructed from the \hs{edges}
+formed by the path neighbours:
+
+\begin{minted}{haskell}
+path :: Graph g => [Vertex g] -> g
+path []  = empty
+path [x] = vertex x
+path xs  = edges $ @\std{zip}@ xs (@\std{tail}@ xs)
+\end{minted}
+
+\noindent
+Note that the case with a single vertex on the path requires a special treatment.
+
+If we connect the last vertex of a path to the first one, we get a \emph{circuit}
+graph, or a \emph{cycle}. Let's express this in terms of the \hs{path} function:
+
+\begin{minted}{haskell}
+circuit :: Graph g => [Vertex g] -> g
+circuit []     = empty
+circuit (x:xs) = path $ [x] ++ xs ++ [x]
+\end{minted}
+
+A \emph{star} graph can be obtained by connecting a centre vertex to a given
+list of \emph{leaves}:
+
+\begin{minted}{haskell}
+star :: Graph g => Vertex g -> [Vertex g] -> g
+star x ys = connect (vertex x) (vertices ys)
+\end{minted}
+
+Finally, \emph{trees} and \emph{forests} can be constructed by the following
+pair of mutually recursive functions:
+
+\begin{minted}{haskell}
+tree :: Graph g => Tree (Vertex g) -> g
+tree (Node x f) = overlay (star x $ @\std{map}@ rootLabel f) (forest f)
+
+forest :: Graph g => Forest (Vertex g) -> g
+forest = @\std{foldr}@ overlay empty . @\std{map}@ tree
+\end{minted}
+
+\noindent
+That is, each tree node is represented by a star overlaid with the forest
+formed by the subtrees of the node's descendants. We remind the reader the
+definitions of the data types \hs{Tree} and \hs{Forest} from the
+\textsf{containers} library for completeness:
+
+\begin{minted}{haskell}
+data Tree a = Node { rootLabel :: a, subForest :: Forest a }
+
+type Forest a = [Tree a]
+\end{minted}
+
+Below we experiment with these functions and their properties, and define
+graphs \hs{p4} and \hs{pentagon} that we will need in the next subsection.
+
+\begin{minted}[frame=single]{haskell}
+@\ghci@ p4 = path "abcd"
+@\ghci@ pentagon = circuit [1..5]
+
+@\ghci@ edgeList p4
+[('a','b'),('b','c'),('c','d')]
+
+@\ghci@ :t pentagon
+@\blk{pentagon}@ :: (Graph g, Num (Vertex g), Enum (Vertex g)) => g
+
+@\ghci@ quickCheck $ \xs -> path xs `isSubgraphOf` (circuit xs :: Relation Int)
+@\blk{+++ OK, passed 100 tests.}@
+
+@\ghci@ adjacencyList $ forest $ dfs (1 + 2 * 3 + 4 * (5 + 6))
+[(1,[@@]),(2,[3]),(3,[@@]),(4,[5,6]),(5,[@@]),(6,[@@])]
+
+@\ghci@ quickCheck $ \xs -> path xs == (clique xs :: Transitive Int)
+@\blk{+++ OK, passed 100 tests.}@
+\end{minted}
+
+The last property deserves a remark: the transitive closure of a path graph
+is the clique on the same set of vertices, therefore they are considered equal
+when interpreted by the \hs{Transitive} graph instance.
+
+\subsection{Polymorphic graph transformations}\label{sub-polymorphic}
+
 \subsection{Benchmarks}\label{sub-benchmarks}
+

@@ -281,12 +281,12 @@ axioms x y z = conjoin
 \caption{Testsuite for the minimal set of axioms}
 \end{subfigure}
 \vspace{-3mm}
-\caption{Automated testing infrastructure\label{fig-testing}}
+\caption{Automated testing infrastructure for algebraic graphs\label{fig-testing}}
 \end{figure}
 
 \subsection{Automated testing}\label{sub-testing}
 
-Theorem provers, such as Liquid Haskell~\cite{2016_vazou_liquid},
+Theorem provers, such as Agda~\cite{2007_norell_agda},
 can substantially reduce the effort required for formal verification,
 however, automated testing remains an effective and pervasively used
 method for formulating and testing functional properties. In Haskell,
@@ -297,7 +297,7 @@ algebraic graphs. The function~\hs{gen} in Fig.~\ref{fig-testing}(a)
 allows to generate arbitrary graph expressions of specified size.
 It is polymorphic and can therefore be used as a default implementation
 of QuickCheck's \hs{Arbitrary} type class, as shown by a sketch of
-the \hs{Arbitrary@\,\,@(Expr@\,\,\blk{a}@)} instance, where \hs{Expr}
+the \hs{Arbitrary@\,\,@(Expr@\,\,\blk{a}@)} instance definition, where \hs{Expr}
 is a \hs{Graph} instance defined in the next section~\S\ref{sec-a-la-carte}.
 
 Fig.~\ref{fig-testing}(b) shows an implementation of the \hs{axioms}
@@ -326,5 +326,5 @@ which we contemplated in the beginning of this section:
 \end{minted}
 
 \noindent
-Viola! Can you formally prove the property? We bet it will not be as quick.
-% Viola! We challenge you to formally prove the property as quickly.
+All properties and theorems that we discuss (and occasionally \hs{quickCheck})
+have been formally proved in Agda.
