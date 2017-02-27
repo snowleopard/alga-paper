@@ -1,5 +1,154 @@
 %!TEX root = alga.tex
 \section{Graphs \`{a} la carte}\label{sec-a-la-carte}
 
-Relation, Basic
-free model
+In this section we define several useful \hs{Graph} instances, and
+show that the algebra presented in the previous section~\S\ref{sec-algebra} is
+not restricted only
+to directed graphs, but can be extended to axiomatically represent undirected,
+reflexive, transitively closed, and labelled graphs, their various
+combinations, and even hypergraphs.
+
+\begin{figure}[b]
+\vspace{-3mm}
+\begin{minted}{haskell}
+import Data.Set (Set, @\blk{singleton, union, elems, fromAscList}@)
+import qualified Data.Set as Set (empty)
+\end{minted}
+\vspace{1mm}
+\begin{minted}{haskell}
+data Relation a = Relation { domain :: Set a, relation :: Set (a, a) } deriving (Eq, Show)
+\end{minted}
+\vspace{1mm}
+\begin{minted}{haskell}
+instance Ord a => Graph (Relation a) where
+    type Vertex (Relation a) = a
+    empty       = Relation Set.empty Set.empty
+    vertex  x   = Relation (singleton x) Set.empty
+    overlay x y = Relation (domain x `union` domain y) (relation x `union` relation y)
+    connect x y = Relation (domain x `union` domain y) (relation x `union` relation y
+        `union` fromAscList [ (a, b) | a <- elems (domain x), b <- elems (domain y) ])
+\end{minted}
+\vspace{-3mm}
+\caption{Implementing the \hs{Graph} type class by a binary relation
+and the core graph construction primitives
+defined in~\S\ref{sub-constructing}\label{fig-relation}}
+\vspace{-3mm}
+\end{figure}
+
+\subsection{Binary relation}\label{sub-relation}
+
+We start by a direct encoding of the graph construction primitives defined
+in~\S\ref{sub-constructing} into the \hs{Relation} data type isomorphic
+to a pair of sets $(V,E)$, see Fig.~\ref{fig-relation}. As we have seen,
+this implementation satisfies the axioms of the graph algebra. Furthermore, it
+is a \emph{free graph} in the sense that it does not satisfy any other laws.
+This follows from the fact that any algebraic graph expression $g$ can be
+rewritten in the following \emph{canonical form}:
+\[
+g = \Big(\sum_{v\in V_g} v\Big) + \Big(\sum_{(u,v)\in E_g} u \rightarrow v\Big),
+\]
+\vspace{-1mm}
+\noindent
+where $V_g$ is the set of vertices that appear in $g$, and $(u,v)\in E_g$ if
+vertices $u$ and $v$ appear in the left-hand and right-hand arguments of
+the connect operation $\rightarrow$ at least once (and should thus be connected
+by an edge). The canonical form of an
+expression $g$ can be represented as \hs{Relation@$\,\,V_g\,E_g$@},
+and any additional law on \hs{Relation} would violate the canonicity property.
+The existence of the canonical form has been proved by~\citet{2014_algebra_mokhov}
+for an extended version of the algebra. The proof fundamentally builds on the
+decomposition axiom: one can apply it repeatedly to an expression, breaking up
+connect sequences $x\rightarrow y\rightarrow z$ into pairs $x \rightarrow y$
+until the decomposition can no longer be applied. We can then open the parentheses
+using the distributivity and rearrange terms into the canonical expression
+by the commutativity and idempotence of the overlay $+$ operation.
+
+It is convenient to make \hs{Relation} an instance of the \hs{Num} type class
+to use the standard $+$ and $*$ operators as shortcuts for \hs{overlay} and
+\hs{connect}, respectively:
+
+\begin{minted}{haskell}
+instance (Ord a, Num a) => Num (Relation a) where
+    fromInteger = vertex . fromInteger
+    (+)         = overlay
+    (*)         = connect
+    signum      = const empty
+    abs         = id
+    negate      = id
+\end{minted}
+
+\noindent
+Note that the \hs{Num} law \hs{@\blk{abs}@ x * signum x == x} is satisfied by the above
+definition since $x \rightarrow \varepsilon = x$. In fact, any \hs{Graph} instance
+can be made a law-abiding \hs{Num} instance if need be, using a definition similar to the above.
+
+We can now play with graphs and binary relations using the interactive GHC:
+
+\begin{minted}[frame=single]{haskell}
+@\ghci@ 1 * (2 + 3) :: Relation Int
+Relation {domain = fromList [1,2,3], relation = fromList [(1,2),(1,3)]}
+@\ghci@ 1 * (2 + 3) + 2 * 3 == (clique [1..3] :: Relation Int)
+True
+@\ghci@ 1 * 2 == (2 * 1 :: Relation Int)
+False
+@\ghci \blk{:t}@ clique "abcd"
+clique "abcd" :: (Graph g, Vertex g @\teq@ Char) => g
+@\ghci @relation (clique "abcd")
+fromList [('a','b'),('a','c'),('a','d'),('b','c'),('b','d'),('c','d')]
+\end{minted}
+
+\noindent
+The last example highlights the fact that the \hs{Relation@\,\,\blk{a}@} instance allows vertices
+of any type \hs{@\blk{a}@} that satisfies the~\hs{Ord@\,\,\blk{a}@} constraint.
+
+\subsection{Deep embedding}\label{sub-embedding}
+
+By embedding the core graph construction primitives into a basic algebraic data type
+we obtain the following simple \hs{Graph} instance:
+
+\begin{minted}{haskell}
+data Expr a = Empty | Vertex a | Overlay (Expr a) (Expr a) | Connect (Expr a) (Expr a)
+    deriving Show
+
+instance Graph (Expr a) where
+    type Vertex (Expr a) = a
+    empty   = Empty
+    vertex  = Vertex
+    overlay = Overlay
+    connect = Connect
+\end{minted}
+
+The instance definition provides a mapping from the \emph{shallow embedding}
+of the core primitives, represented by the type class \hs{Graph}, into the
+corresponding \emph{deep embedding}, represented by the data type \hs{Expr}.
+It is known, e.g. see~\citet{2014_gibbons_folding}, that by \emph{folding} the data
+type one can always obtain the inverse mapping:
+
+\begin{minted}{haskell}
+fold :: (Graph g, Vertex g @\teq@ a) => Expr a -> g
+fold Empty         = empty
+fold (Vertex  x  ) = vertex x
+fold (Overlay x y) = overlay (fold x) (fold y)
+fold (Connect x y) = connect (fold x) (fold y)
+\end{minted}
+
+We cannot use the derived \hs{Eq} instance of the \hs{Expr} data type, because it
+would clearly violate the axioms of the algebra, e.g. \hs{Overlay@\,\,@Empty@\,\,@Empty} is
+structurally different from \hs{Empty}, but they must be equal according to the axioms.
+However, we can implement a custom law-abiding \hs{Eq}
+instance by \emph{reinterpreting} the graph expression \hs{Expr}
+as a \hs{Relation}, thereby gaining access to the canonical graph representation:
+
+\begin{minted}{haskell}
+instance Ord a => Eq (Expr a) where
+    x == y = fold x == (fold y :: Relation a)
+\end{minted}
+
+An interesting feature of the \hs{Expr} instance is that it allows to represent
+densely connected graphs more compactly. For example, \hs{clique [1..n] :: Expr Int}
+has a linear-size representation in memory, while \hs{clique [1..n] :: Relation Int}
+stores each edge separately and therefore uses $O(n^2)$ memory. Exploiting the
+compact graph representation for deriving algorithms that are asymptotically faster
+on dense graphs, compared to conventional algorithms operating on `uncompressed'
+graph representations isomorphic to $(V,E)$, is outside the scope of this paper,
+but is an interesting direction of future research.

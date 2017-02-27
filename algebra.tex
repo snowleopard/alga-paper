@@ -13,8 +13,8 @@ but which may seem tricky to prove (we encourage the reader to try):
 
 In this section we characterise the \hs{Graph} type class with a set of
 axioms that reveal an algebraic structure very similar to a semiring\footnote{
-See Golan~\citeyear{1999_semirings_golan} for a classic overview of semiring
-applications. Dolan~\citeyear{2013_semirings_dolan} uses the semiring theory
+See~\citet{1999_semirings_golan} for a classic overview of semiring
+applications. \citet{2013_semirings_dolan} uses the semiring theory
 to implement graph algorithms.}.
 This provides a convenient framework for proving graph properties, such as
 those listed above, using equational
@@ -142,7 +142,7 @@ The following theorems can be proved from the minimal set of axioms:
 \end{itemize}
 
 We leave the proof to the reader as a not entirely trivial exercise.
-Alekseyev~\citeyear{2014_alekseyev_phd} formalised the algebra of
+\citet{2014_alekseyev_phd} formalised the algebra of
 parameterised graphs (that we build on) in Agda and derived a
 machine-assisted proof of these theorems.
 
@@ -233,9 +233,9 @@ holds in all possible cases.
 
 \begin{figure}[b]
 \vspace{-2mm}
-\begin{subfigure}[b]{0.45\linewidth}
-\begin{minted}[fontsize=\small]{haskell}
-gen :: (Graph g, Arbitrary (Vertex g)) => Gen g
+\begin{subfigure}[b]{0.48\linewidth}
+\begin{minted}{haskell}
+gen ::@\,@(Graph g,@\,@Arbitrary@\,@(Vertex g)) => Gen g
 gen = sized expr
   where
     expr 0 = @\std{return}@ empty
@@ -246,7 +246,7 @@ gen = sized expr
         r <- expr (n - sizeLeft)
         elements [ overlay l r, connect l r ]
 
-instance Arbitrary a => Arbitrary (Expr a) where
+instance Arbitrary a => Arbitrary@\,@(Expr@\,@a) where
     arbitrary = gen
 
     shrink Empty = []
@@ -256,32 +256,32 @@ instance Arbitrary a => Arbitrary (Expr a) where
 \end{subfigure}
 \hfill
 \hfill
+\hfill
 \vrule
 \hfill
 \begin{subfigure}[b]{0.45\linewidth}
-\begin{minted}[fontsize=\small]{haskell}
+\begin{minted}{haskell}
 (+) = overlay -- convenient shortcuts
 (*) = connect
 
 type GraphTestsuite g = (Eq g, Graph g)
-    => g -> g -> g -> Property
+  => g -> g -> g -> Property
 
 axioms :: GraphTestsuite g
 axioms x y z = conjoin
-    [       x + y == y + x
-    , x + (y + z) == (x + y) + z
-    ,   empty * x == x
-    ,   x * empty == x
-    , x * (y * z) == (x * y) * z
-    , x * (y + z) == x * y + x * z
-    , (x + y) * z == x * z + y * z
-    ,   x * y * z == x * y + x * z + y * z ]
+  [       x + y == y + x
+  , x + (y + z) == (x + y) + z
+  ,   empty * x == x
+  ,   x * empty == x
+  , x * (y * z) == (x * y) * z
+  , x * (y + z) == x * y + x * z
+  , (x + y) * z == x * z + y * z
+  ,   x * y * z == x * y + x * z + y * z ]
 \end{minted}
 \caption{Testsuite for the minimal set of axioms}
 \end{subfigure}
 \vspace{-3mm}
 \caption{Automated testing infrastructure\label{fig-testing}}
-\vspace{-3mm}
 \end{figure}
 
 \subsection{Automated testing}\label{sub-testing}
@@ -290,8 +290,8 @@ Theorem provers, such as Liquid Haskell~\cite{2016_vazou_liquid},
 can substantially reduce the effort required for formal verification,
 however, automated testing remains an effective and pervasively used
 method for formulating and testing functional properties. In Haskell,
-the go-to tool for automated testing is QuickCheck developed by
-Claessen and Hughes~\citeyear{2011_quickcheck_claessen}.
+the go-to tool for automated testing is QuickCheck developed
+by~\citet{2011_quickcheck_claessen}.
 Fig.~\ref{fig-testing} shows a reusable testing infrastructure for
 algebraic graphs. The function~\hs{gen} in Fig.~\ref{fig-testing}(a)
 allows to generate arbitrary graph expressions of specified size.
@@ -303,27 +303,28 @@ is a \hs{Graph} instance defined in the next section~\S\ref{sec-a-la-carte}.
 Fig.~\ref{fig-testing}(b) shows an implementation of the \hs{axioms}
 testsuite that can be used for testing a \hs{Graph} instance against
 the minimal set of axioms defined in~\S\ref{sub-laws}.
-For example, let's do a quick check of \hs{Expr@\,@Int} in interactive GHC:
+For example, let's do a quick check of \hs{Expr@\,@Int} in the interactive GHC:
 
-\begin{minted}{haskell}
+\begin{minted}[frame=single]{haskell}
 @\ghci @quickCheck (axioms :: GraphTestsuite (Expr Int))
 @\blk{+++ OK, passed 100 tests.}@
 \end{minted}
 
 \noindent
-QuickCheck generates 100 random test cases $(x,y,z)$ using the \hs{gen}
+Here QuickCheck generates 100 random test cases $(x,y,z)$ using the \hs{gen}
 function and checks that \hs{axioms@\,$x\,y\,z$@} holds in each case. Note
 that we have to tell QuickCheck which specific \hs{Graph} instance to test
 by providing a type signature for the polymorphic \hs{axioms} testsuite.
 
 Finally, let's use QuickCheck to test the property
 \hs{clique (xs ++ ys)} $\ =\ $ \hs{connect (}\hs{clique xs) (}\hs{clique ys)},
-which we observed in the beginning of this section:
+which we contemplated in the beginning of this section:
 
-\begin{minted}{haskell}
-@\ghci @quickCheck $ \xs ys -> clique (xs ++ ys) == connect (clique xs) (clique ys :: Epxr Int)
+\begin{minted}[frame=single]{haskell}
+@\ghci @quickCheck $ \xs ys -> clique@\,@(xs ++ ys) == connect@\,@(clique xs) (clique ys :: Epxr Int)
 @\blk{+++ OK, passed 100 tests.}@
 \end{minted}
 
 \noindent
 Viola! Can you formally prove the property? We bet it will not be as quick.
+% Viola! We challenge you to formally prove the property as quickly.
