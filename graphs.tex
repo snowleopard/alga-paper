@@ -11,7 +11,7 @@ combinations, and even hypergraphs.
 \begin{figure}[b]
 \vspace{-3mm}
 \begin{minted}{haskell}
-import Data.Set (Set, @\blk{singleton, union, elems, fromAscList}@)
+import           Data.Set (Set, @\blk{singleton, union, elems, fromAscList}@)
 import qualified Data.Set as Set (empty)
 \end{minted}
 \vspace{1mm}
@@ -45,7 +45,7 @@ is a \emph{free graph} in the sense that it does not satisfy any other laws.
 This follows from the fact that any algebraic graph expression $g$ can be
 rewritten in the following \emph{canonical form}:
 \[
-g = \Big(\sum_{v\in V_g} v\Big) + \Big(\sum_{(u,v)\in E_g} u \rightarrow v\Big),
+g = \Big(\sum_{v\in V_g} v\Big) + \Big(\sum_{(u,v)\in E_g} \hspace{-1mm} u \rightarrow v\Big),
 \]
 \vspace{-1mm}
 \noindent
@@ -152,3 +152,70 @@ compact graph representation for deriving algorithms that are asymptotically fas
 on dense graphs, compared to conventional algorithms operating on `uncompressed'
 graph representations isomorphic to $(V,E)$, is outside the scope of this paper,
 but is an interesting direction of future research.
+
+\begin{figure}[b]
+\vspace{-2mm}
+\begin{minted}{haskell}
+import           Data.Map.Strict (Map, keysSet, fromSet)
+import qualified Data.Map.Strict as Map
+import           Data.Set (Set)
+import qualified Data.Set as Set
+\end{minted}
+\vspace{1mm}
+\begin{minted}{haskell}
+newtype AdjacencyMap a = AM { adjacencyMap :: Map a@\,\,@(Set a) }@\,\,@deriving@\,\,@(Arbitrary,@\,\,@Eq,@\,\,@Show)
+\end{minted}
+\vspace{1mm}
+\begin{minted}{haskell}
+instance Ord a => Graph (AdjacencyMap a) where
+    type Vertex (AdjacencyMap a) = a
+    empty       = AM $ Map.empty
+    vertex  x   = AM $ Map.singleton x Set.empty
+    overlay x y = AM $ Map.unionWith Set.union (adjacencyMap x) (adjacencyMap y)
+    connect x y = AM $ Map.unionsWith Set.union [ adjacencyMap x, adjacencyMap y,
+        fromSet (const . keysSet $ adjacencyMap y) (keysSet $ adjacencyMap x) ]
+\end{minted}
+\vspace{-3mm}
+\caption{Implementing the \hs{Graph} type class by adjacency map\label{fig-adjacency-map}}
+\vspace{-1mm}
+\end{figure}
+
+\subsection{Adjacency map and topological sort}\label{sub-adjacency-map}
+
+In this subsection we show how to reuse existing graph libraries, such as
+\textsf{containers}, by wrapping them into the algebraic graph API. More specifically,
+we reuse the efficient implementation of the \emph{topological sort} developed
+by~\citet{1995_king_graphs}.
+
+The interface of the \textsf{containers} library uses the adjacency list
+representation of graphs and we therefore define a new \hs{Graph} instance that
+provides the closest match, see Fig.~\ref{fig-adjacency-map}. In our experiments
+this instance is often faster than \hs{Relation} because of more efficient
+sharing of common subgraphs in memory, see~\S\ref{sub-benchmarks}.
+
+The \hs{AdjacencyMap@\,\,\blk{a}@} instance is parametric and in order to use the
+\hs{topSort} function provided by \textsf{containers}, we need to map the graph vertices
+into a contiguous subsets of integers \hs{Int}. This can be done by the function
+\hs{graphFromEdges} defined in \textsf{containers} that requires an adjacency list as
+the input. We can obtain the adjacency list from \hs{AdjacencyMap@\,\,\blk{a}@} as follows:
+
+\begin{minted}{haskell}
+adjacencyList :: AdjacencyMap a -> [(a, [a])]
+adjacencyList = @\std{map}@ (@\std{fmap}@ Set.toAscList) . Map.toAscList . adjacencyMap
+\end{minted}
+
+\noindent
+Let's test that \hs{AdjacencyMap@\,\,\blk{a}@} is a valid \hs{Graph} instance and
+demonstrate \hs{adjacencyList}:
+
+\begin{minted}[frame=single]{haskell}
+@\ghci @quickCheck (axioms :: GraphTestsuite (AdjacencyMap Int))
+@\blk{+++ OK, passed 100 tests.}@
+
+@\ghci @adjacencyList $ clique [1..4]
+[(1,[2,3,4]),(2,[3,4]),(3,[4]),(4,[@@])]
+\end{minted}
+
+
+We do not show the details of our
+implementation here, as they
