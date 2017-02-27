@@ -183,30 +183,38 @@ instance Ord a => Graph (AdjacencyMap a) where
 \subsection{Adjacency map and topological sort}\label{sub-adjacency-map}
 
 In this subsection we show how to reuse existing graph libraries, such as
-\textsf{containers}, by wrapping them into the algebraic graph API. More specifically,
-we reuse the efficient implementation of the \emph{topological sort} developed
-by~\citet{1995_king_graphs}.
+\textsf{containers} and \textsf{fgl}, by wrapping them into the algebraic
+graph API. More specifically, we show how to reuse the efficient implementation of
+the \emph{topological sort} algorithm developed by~\citet{1995_king_graphs}.
 
-The interface of the \textsf{containers} library uses the adjacency list
+The interface of the \textsf{containers} library uses the \emph{adjacency list}
 representation of graphs and we therefore define a new \hs{Graph} instance that
 provides the closest match, see Fig.~\ref{fig-adjacency-map}. In our experiments
 this instance is often faster than \hs{Relation} because of more efficient
 sharing of common subgraphs in memory, see~\S\ref{sub-benchmarks}.
 
-The \hs{AdjacencyMap@\,\,\blk{a}@} instance is parametric and in order to use the
-\hs{topSort} function provided by \textsf{containers}, we need to map the graph vertices
-into a contiguous subsets of integers \hs{Int}. This can be done by the function
+The \hs{AdjacencyMap} instance is parametric and in order to use the
+functions provided by \textsf{containers}, we need to map the graph vertices
+into contiguous subsets of integers \hs{Int}. This can be done by the function
 \hs{graphFromEdges} defined in \textsf{containers} that requires an adjacency list as
-the input. We can obtain the adjacency list from \hs{AdjacencyMap@\,\,\blk{a}@} as follows:
+the input. We can obtain the adjacency list from \hs{AdjacencyMap} as follows:
 
 \begin{minted}{haskell}
 adjacencyList :: AdjacencyMap a -> [(a, [a])]
 adjacencyList = @\std{map}@ (@\std{fmap}@ Set.toAscList) . Map.toAscList . adjacencyMap
 \end{minted}
+Both \textsf{containers} and \textsf{fgl} also provide graph constructors from the
+\emph{edge list} graph representation, which can be readily obtained from
+\hs{adjacencyList}:
+
+\begin{minted}{haskell}
+edgeList :: AdjacencyMap a -> [(a, a)]
+edgeList = concatMap (\(x, ys) -> @\std{map}@ (x,) ys) . adjacencyList
+\end{minted}
 
 \noindent
-Let's test that \hs{AdjacencyMap@\,\,\blk{a}@} is a valid \hs{Graph} instance and
-demonstrate \hs{adjacencyList}:
+Let's test that \hs{AdjacencyMap} is a valid \hs{Graph} instance and
+showcase \hs{adjacencyList} and \hs{edgeList}:
 
 \begin{minted}[frame=single]{haskell}
 @\ghci @quickCheck (axioms :: GraphTestsuite (AdjacencyMap Int))
@@ -214,8 +222,54 @@ demonstrate \hs{adjacencyList}:
 
 @\ghci @adjacencyList $ clique [1..4]
 [(1,[2,3,4]),(2,[3,4]),(3,[4]),(4,[@@])]
+
+@\ghci @edgeList $ edges [('a','b'),('b','c'),('a','b')]
+[('a','b'),('b','c')]
 \end{minted}
 
+We can now build safe bridges to \textsf{containers} and \textsf{fgl}. Consider
+the following wrapper\footnote{We use \textsf{GeneralizedNewtypeDeriving} GHC
+extension to derive \hs{Arbitrary}, \hs{Graph} and \hs{Num} instances. Note that
+the current version of GHC does not support the extension for classes
+with associated types, such as \hs{Graph}, but the feature has already been
+implemented and will be available in the next GHC release. Until then
+one needs to write the trivial \hs{Graph} instance manually.}
+around \hs{AdjacencyMap}:
 
-We do not show the details of our
-implementation here, as they
+\begin{minted}{haskell}
+newtype TopSort a = TS (AdjacencyMap a) deriving (Arbitrary, Graph, Num, Show)
+\end{minted}
+\vspace{1mm}
+\begin{minted}{haskell}
+instance Ord a => Eq (TopSort a) where
+    x == y = topSort x == topSort y
+\end{minted}
+\vspace{1mm}
+\begin{minted}{haskell}
+topSort :: Ord a => TopSort a -> Maybe [a]
+topSort = ... -- call Data.Graph.topSort via Data.Graph.graphFromEdges
+\end{minted}
+
+\noindent
+The \hs{TopSort} instance differs from \hs{AdjacencyMap} only in one aspect: it uses
+a custom equality test, which satisfies more laws than required by the \hs{Graph}
+instance. Indeed, there are many pairs of different graphs, whose topological sorts
+coincide, e.g. \hs{topSort (1 + 2)} = \hs{topSort (1 * 2)} = \hs{Just [1,2]}.
+
+We do not show the implementation of the \hs{topSort} function here, as it is not
+particularly interesting and involves low-level plumbing, however we would like to
+emphasise that the resulting interface is fully parametric and safe. Note the
+return type of \hs{topSort}: the function returns \hs{Nothing}
+if a topological sort does not exist because the graph is cyclic; otherwise it
+returns a list of vertices in the topological order, as demonstrated below:
+
+\begin{minted}[frame=single]{haskell}
+@\ghci @quickCheck (axioms :: GraphTestsuite (TopSort Int))
+@\blk{+++ OK, passed 100 tests.}@
+
+@\ghci @topSort $ 1 * 2 + 3 * 1
+Just [3,1,2]
+
+@\ghci @topSort $ 1 * 2 + 2 * 1
+Nothing
+\end{minted}
