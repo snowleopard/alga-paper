@@ -179,7 +179,7 @@ when interpreted by the \hs{Transitive} graph instance.
 \subsection{Graph transpose}
 
 In the rest of this section we present a toolbox for transforming polymorphic graph
-expressions without turning them into a concrete data structure. The functions of the
+expressions without turning them into a concrete data structure. The functions in the
 presented toolbox are listed in Fig.~\ref{fig-api}(e).
 
 One of the simplest transformations one can apply to a graph is to flip the
@@ -218,7 +218,7 @@ Let's check if this works:
 [(2,1),(3,1),(4,1),(4,2),(4,3)]
 \end{minted}
 
-This has zero runtime cost, because all we do is wrapping and unwrapping
+The \hs{transpose} has zero runtime cost, because all we do is wrapping and unwrapping
 the \hs{newtype}, which is guaranteed to be free or, to be more precise, is handled
 by the GHC at compile time.
 
@@ -255,7 +255,8 @@ gmap = flip gfor
 \end{minted}
 
 Essentially, we are defining another \hs{newtype} wrapper, which pushes the
-given function all the way towards the vertices. This has no runtime cost,
+given function all the way towards the vertices of a given graph expression.
+This has no runtime cost,
 just as before, although the actual evaluation of the given function at each
 vertex will not be free, of course. Let's test \hs{gmap}:
 
@@ -359,8 +360,8 @@ list \hs{[1,1]}.
 
 What do the operations of removing a vertex and splitting a vertex have in common?
 They both can be implemented by replacing each vertex of a graph with a (possibly empty)
-subgraph and flattening the result. You may recognise this as monad's
-\hs{bind} operation. We are going to implement \hs{bind}
+subgraph and flattening the result. You may recognise this as the \hs{bind} operation
+of a monad. We are going to implement \hs{bind}
 by wrapping it into yet another \hs{newtype}:
 
 \begin{minted}{haskell}
@@ -417,7 +418,7 @@ removeVertex v = induce (/= v)
 \end{minted}
 
 \noindent
-Note that the above example matches the one in Fig.~\ref{fig-example}.
+Note that the above example comes from Fig.~\ref{fig-example}.
 
 The polymorphic implementation of \hs{removeVertex} presented above takes
 $O(|g|)$ to remove a vertex from a graph expression $g$, which is
@@ -479,15 +480,16 @@ $x_u \rightarrow y_{uv}$ and $x_{uv} \rightarrow y_v$, where:
 \begin{itemize}
     \item $x_u = \hs{removeVertex}~u~x$ and $y_{uv} = \hs{removeEdge}~u~v~y$,
     therefore $x_u \rightarrow y_{uv}$ definitely does not contain the edge $(u,v)$
-    at the cost of losing the vertices $u$ in the left-hand side $x_u$.
+    at the cost of losing the vertex $u$ in the left-hand side $x_u$.
     \item $y_v = \hs{removeVertex}~v~y$ and $x_{uv} = \hs{removeEdge}~u~v~x$,
     therefore $x_{uv} \rightarrow y_v$ definitely does not contain the edge $(u,v)$
-    at the cost of losing the vertices $v$ in the right-hand side $y_v$.
+    at the cost of losing the vertex $v$ in the right-hand side $y_v$.
 \end{itemize}
 \noindent
-The overlay $x_u \rightarrow y_{uv} + x_{uv} \rightarrow y_v$ restores the missing
-vertices, because their copy is present in the other subexpression, but the
-edge $(u,v)$ is removed in both subexpressions and is therefore not restored.
+The overlay $x_u \rightarrow y_{uv} + x_{uv} \rightarrow y_v$ contains the
+vertices $u$ and $v$, because at least one copy of each vertex has been preserved,
+but the edge $(u,v)$ is removed in both subexpressions and is therefore removed as
+intended.
 
 We demonstrate \hs{removeEdge} on two simple examples:
 \begin{minted}[frame=single]{haskell}
@@ -504,7 +506,7 @@ We demonstrate \hs{removeEdge} on two simple examples:
 \noindent
 The \hs{removeEdge} function is expensive: given an expression of size $|g|$
 it may produce a transformed expression of the quadratic size $O(|g|^2)$. Many
-concrete \hs{Graph} instances provide a much faster equivalent of \hs{removeEdge}.
+concrete \hs{Graph} instances provide much faster equivalents of \hs{removeEdge}.
 
 \begin{figure}
 \centerline{\includegraphics[scale=0.3]{fig/De-Bruijn-construction.pdf}}
@@ -581,19 +583,19 @@ The implementation is written in the vanilla functional programming style
 and, for the most part, should be easy to follow and build on by others.
 The library can handle graphs
 comprising millions of vertices and billions of edges in the matter of
-seconds, which is sufficiently fast for many applications.
+seconds, which is not earth-shattering but is sufficiently fast for many applications.
 The most efficient \hs{Graph} instance that we developed is \hs{IntAdjacencyMap}.
-It is defined as in Fig.~\ref{fig-adjacency-map} with the only difference
-that it uses specialised \hs{IntMap} and \hs{IntSet} data structures and therefore
+It is defined as in Fig.~\ref{fig-adjacency-map} but uses specialised
+\hs{IntMap} and \hs{IntSet} data structures and therefore
 only supports graphs with \hs{Int} vertices. We benchmarked \hs{IntAdjacencyMap}
-using the \textsf{Criterion} library on the following three examples:
+on the following three examples:
 
 \begin{itemize}
     \item A De Bruijn graph \hs{deBruijn 1000000 "0123456789"} with
     $|V|=10^6$ and $|E|=10^7$ takes 3.77s.
 
     \item A 2D mesh \hs{box@\,@(}\hs{path [1..1000])@\,@(}\hs{path [1..1000])}
-    with $|V|=10^6$ and $|E| \approx 2\cdot 10^6$, takes 4.24s.
+    with $|V|=10^6$ and $|E| \approx 2\cdot 10^6$ takes 4.24s.
 
     \item A clique \hs{clique [1..44722]} with $|V|=44722$ and $|E| \approx 10^9$
     takes 10.2s.
