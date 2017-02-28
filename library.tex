@@ -570,6 +570,34 @@ $|\hs{alphabet}|^\hs{len}$ vertices.
 
 \subsection{Summary}\label{sub-library-summary}
 
-We have presented a library of graph transformation algorithms that are available
-for any graph instance. The presented implementations are written in the vanilla
-functional programming style and, for the most part, are easy to understand.
+We have presented a library of polymorphic graph construction and
+transformation functions that
+provide a flexible and elegant way to manipulate graph expressions
+polymorphically, before eventually interpreting them using one of the \hs{Graph}
+instances defined in~\S\ref{sec-a-la-carte}. See the library API in
+Fig.~\ref{fig-api}.
+
+The implementation is written in the vanilla functional programming style
+and, for the most part, should be easy to follow and build on by others.
+The library can handle graphs
+comprising millions of vertices and billions of edges in the matter of
+seconds, which is sufficiently fast for many applications.
+The most efficient \hs{Graph} instance that we developed is \hs{IntAdjacencyMap}.
+It is defined as in Fig.~\ref{fig-adjacency-map} with the only difference
+that it uses specialised \hs{IntMap} and \hs{IntSet} data structures and therefore
+only supports graphs with \hs{Int} vertices. We benchmarked \hs{IntAdjacencyMap}
+using the \textsf{Criterion} library on the following three examples:
+
+\begin{itemize}
+    \item A De Bruijn graph \hs{deBruijn 1000000 "0123456789"} with
+    $|V|=10^6$ and $|E|=10^7$ takes 3.77s.
+
+    \item A 2D mesh \hs{box@\,@(}\hs{path [1..1000])@\,@(}\hs{path [1..1000])}
+    with $|V|=10^6$ and $|E| \approx 2\cdot 10^6$, takes 4.24s.
+
+    \item A clique \hs{clique [1..44722]} with $|V|=44722$ and $|E| \approx 10^9$
+    takes 10.2s.
+\end{itemize}
+
+The parametric \hs{AdjacencyMap} instance is approximately 2 times slower
+on the above examples.

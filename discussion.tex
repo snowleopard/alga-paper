@@ -1,6 +1,57 @@
 %!TEX root = alga.tex
-\section{Discussion and future work}\label{sec-discussion}
+\section{Discussion, limitations and future research}\label{sec-discussion}
 
-% Using discrimination library for better efficiency
-% Modular decomposition for minimisation
-% Solving graph equations
+The paper presented \emph{algebraic graphs} --- a new approach to representing and
+working with graphs in functional programming languages.
+Compared to the state-of-the-art, algebraic graphs are easier to use,
+more compositional, and have a smaller core of only four graph
+construction primitives characterised by an elegant algebra of graphs.
+
+We demonstrated the flexibility of algebraic graphs by numerous examples and
+developed a library for polymorphic graph construction and transformation.
+
+The presented approach has a few limitations:
+
+\begin{itemize}
+    \item There are no known efficient implementations of fundamental graph
+    algorithms, such as depth-first search, that work directly on the algebraic
+    core. Therefore, we need to translate core expressions to conventional
+    graph representations, such as adjacency lists, and utilise existing graph
+    libraries, which may be suboptimal for certain algorithmic problems.
+
+    \item The presented \hs{Graph} instances incur a logarithmic overhead
+    during graph construction and therefore do not scale well. The performance
+    figures reported in~\S\ref{sub-library-summary} are not acceptable for
+    high-performance applications. A promising direction to overcoming this limitation
+    is to employ the \emph{discrimination} Haskell library that provides linear-time
+    sorting and grouping algorithms~\cite{2012_henglein_discriminations}.
+
+    \item This paper has not addressed labelled graphs. In particular, there is
+    no algebraic characterisation of
+    graphs with arbitrary vertex and edge labels. However,~\citet{2014_algebra_mokhov}
+    give an algebraic characterisation for graphs labelled with Boolean functions.
+    % \item The graph transformation library does not provide the functionality
+    % for overriding the default implementation of functions that can be implemented
+    % more efficiently by a specific data structure. An example of a function that
+    % would particular benefit from overriding is \hs{removeEdge}, as defined
+    % in~\S\ref{sub-beyond}.
+\end{itemize}
+
+Despite these limitations, algebraic graphs have been successfully used
+in the design of asynchronous circuits~\cite{2015_beaumont_concepts} and
+processor microcontrollers~\cite{2014_algebra_mokhov}.
+
+Our future research will focus on addressing the limitations, as well as on
+exploration of the following topics:
+
+\begin{itemize}
+    \item By using the algebraic approach to graph representation one can
+    formulate graph algorithms in the form of finding a solution of an algebraic
+    equation with unknowns.
+    This may potentially open way to the discovery of novel graph algorithms.
+    \item Algebraic graph expressions can be minimised via the
+    \emph{modular decomposition} of graphs~\cite{2005_mcconnell_modular}, thereby
+    reducing their memory footprint, as well as speeding up their processing.
+    Exploiting the compactness of algebraic graphs in algorithms is a
+    promising research direction.
+\end{itemize}
