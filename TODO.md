@@ -6,3 +6,4 @@
 * Precedence of -> may be non-obvious because + seems to bind tighter visually
 * Drop benchmarks
 * Different undirected axiom
+* Simplify instance

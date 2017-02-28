@@ -182,12 +182,13 @@ instance Ord a => Graph (AdjacencyMap a) where
 \vspace{-1mm}
 \end{figure}
 
-\subsection{Adjacency map, depth-first search, and topological sort}\label{sub-adjacency-map}
+\subsection{Adjacency map and friends}\label{sub-adjacency-map}
 
 In this subsection we show how to reuse existing graph libraries, such as
 \textsf{containers} and \textsf{fgl}, by wrapping them into the algebraic
 graph API. More specifically, we show how to reuse the efficient implementations
-of the \emph{depth-first search} and \emph{topological sort} algorithms developed by~\citet{1995_king_graphs}.
+of the \emph{depth-first search forest} and \emph{topological sort} algorithms
+developed by~\citet{1995_king_graphs}.
 
 The interface of the \textsf{containers} library uses the \emph{adjacency list}
 representation of graphs and we therefore define a new \hs{Graph} instance that
@@ -197,22 +198,21 @@ sharing of common subgraphs in memory, see benchmarks in~\S\ref{sub-benchmarks}.
 
 The \hs{AdjacencyMap} instance is parametric and in order to use the
 functions provided by \textsf{containers}, we need to map the graph vertices
-into contiguous subsets of integers \hs{Int}. This can be done by the function
-\hs{graphFromEdges} provided by \textsf{containers} that requires an adjacency
-list as the input. We can obtain the adjacency list from \hs{AdjacencyMap} as
-follows:
+into a contiguous subset of integers \hs{Int}. This can be done by the
+\hs{graphFromEdges} function provided by \textsf{containers} that takes an adjacency
+list as the input. We can obtain the adjacency list from the \hs{AdjacencyMap}
+instance as follows:
 
 \begin{minted}{haskell}
 adjacencyList :: AdjacencyMap a -> [(a, [a])]
 adjacencyList = @\std{map}@ (@\std{fmap}@ Set.toAscList) . Map.toAscList . adjacencyMap
 \end{minted}
-Both \textsf{containers} and \textsf{fgl} also provide graph constructors from the
-\emph{edge list} graph representation, which can be readily obtained from
-\hs{adjacencyList}:
+Both \textsf{containers} and \textsf{fgl} also provide graph constructors from
+\emph{edge lists}, which we compute as follows:
 
 \begin{minted}{haskell}
 edgeList :: AdjacencyMap a -> [(a, a)]
-edgeList = concatMap (\(x, ys) -> @\std{map}@ (x,) ys) . adjacencyList
+edgeList = @\std{concatMap}@ (\(x, ys) -> @\std{map}@ (x,) ys) . adjacencyList
 \end{minted}
 
 \noindent
@@ -231,17 +231,17 @@ showcase \hs{adjacencyList} and \hs{edgeList}:
 \end{minted}
 
 We can now build bridges to \textsf{containers} and \textsf{fgl}. For example,
-the following functions provide a safe and parametric interface to depth-first
-search and topological sort algorithms performing the necessary plumbing:
+the following are safe and parametric interfaces to depth-first
+search forest and topological sort algorithms (we do not show the underlying plumbing):
 
 \begin{minted}{haskell}
-dfs     :: Ord a => AdjacencyMap a -> Forest a
-topSort :: Ord a => AdjacencyMap a -> Maybe [a]
+dfsForest :: Ord a => AdjacencyMap a -> Forest a  -- uses Data.Graph.dff
+topSort   :: Ord a => AdjacencyMap a -> Maybe [a] -- uses Data.Graph.topSort
 \end{minted}
 
 \noindent
 Note the return type of \hs{topSort}: the function returns \hs{Nothing}
-if a topological sort does not exist because the graph is cyclic; otherwise it
+if the graph is cyclic and no topological sort exists; otherwise it
 returns a list of vertices in the topological order, as demonstrated below.
 
 \begin{minted}[frame=single]{haskell}
@@ -271,13 +271,16 @@ instance Ord a => Eq (TopSort a) where
 \end{minted}
 
 \noindent
-The \hs{TopSort} instance differs from \hs{AdjacencyMap} only in one aspect: it uses
-a custom equality test, which satisfies more laws than required by the \hs{Graph}
+\hs{TopSort} differs from \hs{AdjacencyMap} only in one aspect: it uses
+a custom equality test, which satisfies \emph{more} laws than required by the \hs{Graph}
 instance. Indeed, there are many pairs of different graphs, whose topological sorts
 coincide, e.g. \hs{topSort (1 + 2)} $=$ \hs{topSort (1 * 2)} $=$ \hs{Just [1,2]}.
-A similar \hs{newtype Dfs} wrapper can be created for the depth-first search
-algorithm. It will also trivially satisfy the \hs{Graph} axioms, but will have
-a different equivalence relation, since \hs{dfs (1 + 2)} $\neq$ \hs{dfs (1 * 2)}.
+A similar \hs{newtype DfsForest} wrapper can be created for the depth-first search
+forest algorithm. It will also trivially satisfy the \hs{Graph} axioms, but will have
+a different equivalence relation, since \hs{dfsForest (1 + 2)} $\neq$ \hs{dfsForest (1 * 2)}.
+These examples demonstrate that the world of \hs{Graph} instances is rich and complex,
+which motivates us to study polymorphic graph transformations that can be reused by
+all law-abiding inhabitants -- see \S\ref{sec-transformations}.
 
 \subsection{Undirected graphs}\label{sub-undirected}
 
@@ -327,7 +330,7 @@ instance Ord a => Eq (Symmetric a) where
     S x == S y = symmetricClosure x == symmetricClosure y
 
 symmetricClosure :: Ord a => Relation a -> Relation a
-symmetricClosure = ... -- direct edges canonically or make them bidirectional
+symmetricClosure = ... -- canonically redirect edges or make them bidirectional
 \end{minted}
 
 Note that algebraic expressions of undirected graphs have the canonical form where all
