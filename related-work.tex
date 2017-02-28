@@ -1,17 +1,54 @@
 %!TEX root = alga.tex
 \section{Related work}\label{sec-related}
 
-% In this section we review existing approaches to working with graphs developed
-% by the functional programming community.
+Historically, first approaches to graph representation in functional programming
+used edge lists, adjacency lists, as well as mutually recursive data structures
+representing cyclic graphs by the so-called `tying the knot' approach. The former
+were generally slower
+than their imperative counterparts, while the latter were very difficult to
+work with. An asymptotically optimal implementation of the depth-first search
+algorithm developed by~\citet{1995_king_graphs} used arrays to represent graphs
+and \emph{state-transformer monads}~\cite{1994_launchbury_st} to mimic imperative array
+updates in pure functional programming. The developed algorithms are still in
+use today and are available from the \textsf{containers} library shipped with the GHC.
+As demonstrated in the motivation section~\S\ref{sec-motivation}, the API of
+the library is difficult to use and contains partial functions.
+
+A fundamentally different approach by~\citet{2001_erwig_inductive} is based
+on \emph{inductive graphs}, whereby a graph can be decomposed into a \emph{context}
+(a node with its neighbourhood) and the rest of the graph. This inductive
+definition makes it possible to share common subgraphs and provides a way to
+implement graph algorithms in a more functional style compared to the previous
+approaches based on array representations. Inductive graphs are implemented in
+the \textsf{fgl} library that contains implementations of many standard graph
+algorithms, from depth-first search to maximum flow on weighted graphs. Compared
+to algebraic graphs proposed in this paper, the \textsf{fgl} library has a larger
+core of graph construction primitives (10 vs 4), some of which are partial, as
+has been shown in the motivational example in Fig~\ref{fig-example}.
+
+Several other authors investigated ways to define graphs compositionally,
+e.g.~\citet{1995_gibbons_algebra} proposed an algebraic framework for modelling
+acyclic graphs comprising 6 core graph construction primitives, but the approach
+was not general enough to handle other practically useful classes of graphs.
+
+From a very different angle, simple algebraic structures, such as \emph{semirings},
+have been successfully applied to solving various path problems on graphs using
+functional programming, e.g. see~\citet{2013_semirings_dolan}. These approaches
+typically use matrix-based data structures for manipulating connectivity and distance
+information with the goal of solving optimisation problems on graphs, and are not
+suitable as an abstract interface for graph representation.
+
+This paper builds on the work by~\citet{2014_algebra_mokhov}, where
+the \emph{algebra of parameterised graphs}, a mathematical
+structure very similar to a semiring, was proposed as a complete and sound formalism
+for graph representation in the context of digital circuit design. The authors did
+not investigate applications of the algebra in functional programming but proved
+many important results that are essential for this paper.
+\citet{2014_alekseyev_phd} provided a formalisation of the algebra in Agda
+programming language, which is remarkably close to the presented encoding of the
+core algebraic primitives as a Haskell type class.
 
 % \begin{itemize}
-%     \item Tying the knot:
-%     \item Borrowing imperative algorithms via the State monad.
-%     \item Data.Graph by King & Launchbury, 1995. \url{https://galois.com/wp-content/uploads/2014/08/pub_JL_StructuringDFSAlgorithms.pdf}.
-%     Clever tricks exploiting lazy evaluation (Johnsson 1998) \url{https://pdfs.semanticscholar.org/a6ed/4e55f148e0c48445269990102838f7d7abb5.pdf?_ga=1.176470501.1134931652.1487554701}
-
-%     \item Inductive Graphs by Martin Erwig, 2001. \url{https://web.engr.oregonstate.edu/~erwig/papers/InductiveGraphs_JFP01.pdf}
 %     \item Structured Graphs by Oliveira & Cook. \url{https://www.cs.utexas.edu/~wcook/Drafts/2012/graphs.pdf}
-%     \item An initial-algebra approach to directed acyclic graphs, by J. Gibbons
 %     \item "Algebras for graphs have been studied in the context of graph rewriting, see Bauderon and Courcelle (1986), for example."
 % \end{itemize}

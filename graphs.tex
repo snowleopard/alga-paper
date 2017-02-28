@@ -127,7 +127,7 @@ It is known, e.g. see~\citet{2014_gibbons_folding}, that by \emph{folding} the d
 type one can always obtain the inverse mapping:
 
 \begin{minted}{haskell}
-fold :: (Graph g, Vertex g @\teq@ a) => Expr a -> g
+fold :: Graph g => Expr (Vertex g) -> g
 fold Empty         = empty
 fold (Vertex  x  ) = vertex x
 fold (Overlay x y) = overlay (fold x) (fold y)
@@ -194,14 +194,14 @@ The interface of the \textsf{containers} library uses the \emph{adjacency list}
 representation of graphs and we therefore define a new \hs{Graph} instance that
 provides the closest match, see Fig.~\ref{fig-adjacency-map}. In our experiments
 this instance is often faster than \hs{Relation} because of more efficient
-sharing of common subgraphs in memory, see benchmarks in~\S\ref{sub-benchmarks}.
+sharing of common subgraphs in memory, see benchmarks in~\S\ref{sub-library-summary}.
 
 The \hs{AdjacencyMap} instance is parametric and in order to use the
 functions provided by \textsf{containers}, we need to map the graph vertices
 into a contiguous subset of integers \hs{Int}. This can be done by the
 \hs{graphFromEdges} function provided by \textsf{containers} that takes an adjacency
 list as the input. We can obtain the adjacency list from the \hs{AdjacencyMap}
-instance as follows:
+instance:
 
 \begin{minted}{haskell}
 adjacencyList :: AdjacencyMap a -> [(a, [a])]
@@ -275,12 +275,12 @@ instance Ord a => Eq (TopSort a) where
 a custom equality test, which satisfies \emph{more} laws than required by the \hs{Graph}
 instance. Indeed, there are many pairs of different graphs, whose topological sorts
 coincide, e.g. \hs{topSort (1 + 2)} $=$ \hs{topSort (1 * 2)} $=$ \hs{Just [1,2]}.
-A similar \hs{newtype DfsForest} wrapper can be created for the depth-first search
+A similar \hs{newtype DfsForest} can be created for the depth-first search
 forest algorithm. It will also trivially satisfy the \hs{Graph} axioms, but will have
 a different equivalence relation, since \hs{dfsForest (1 + 2)} $\neq$ \hs{dfsForest (1 * 2)}.
 These examples demonstrate that the world of \hs{Graph} instances is rich and complex,
 which motivates us to study polymorphic graph transformations that can be reused by
-all law-abiding inhabitants -- see \S\ref{sec-transformations}.
+all law-abiding citizens of the \hs{Graph} world -- see \S\ref{sec-transformations}.
 
 \subsection{Undirected graphs}\label{sub-undirected}
 
@@ -313,7 +313,7 @@ comprises only 6 axioms:
     $x + (y + z) = (x + y) + z$.
     \item $\leftrightarrow$ is commutative $x \leftrightarrow y = y \leftrightarrow x$ and
     has $\varepsilon$ is the identity: $x \leftrightarrow \varepsilon = x$.
-    \item Distributivity:
+    \item Left distributivity:
     $x \leftrightarrow (y + z) = x \leftrightarrow y + x \leftrightarrow z$.
     \item Left decomposition: $(x \leftrightarrow y) \leftrightarrow z =
     x \leftrightarrow y + x \leftrightarrow z + y \leftrightarrow z$.
@@ -380,7 +380,7 @@ between reflexive and \emph{irreflexive} graphs: you can always
 turn a reflexive graph into the corresponding irreflexive one by deleting the self-loops,
 and vice versa.
 
-One can implement the reflexive and irreflexive \hs{Graph} instances very similarly to
+One can implement the reflexive and irreflexive \hs{Graph} instances analogously to
 the \hs{Symmetric} implementation presented in~\S\ref{sub-undirected}, by wrapping the
 \hs{Relation} into a \hs{newtype} and giving it a custom \hs{Eq} instance based on the
 \hs{reflexiveClosure} or \hs{irreflexiveClosure}, respectively.
@@ -441,7 +441,7 @@ A subclass \hs{class Graph@\,\,\blk{g}@ => TransitiveGraph@\,\,\blk{g}@} can be 
 algebraic graphs with the closure axiom from others.
 
 \begin{figure}
-\centerline{\includegraphics[scale=0.105]{fig/3-decomposition.pdf}}
+\centerline{\includegraphics[scale=0.12]{fig/3-decomposition.pdf}}
 \caption{3-decomposition:
     $1 \rightarrow 2 \rightarrow 3 \rightarrow 4 =
     1 \rightarrow 2 \rightarrow 3 + 1 \rightarrow 2 \rightarrow 4 +
@@ -494,13 +494,13 @@ leaving only the decomposition axiom in \hs{Graph}, as the law that distinguishe
 
 \subsection{Summary}
 
-In this section we have defined a family of graph instances and their classes that are all
+In this section we have defined a family of graph instances and their classes that
 build on the algebraic core presented in~\S\ref{sec-algebra}. The additional axioms
 that characterise these classes
-can be mixed in various combinations. For example, the algebra of undirected, reflexive
+can be mixed in various combinations. As an example, the algebra of undirected, reflexive
 and transitively closed graphs describes the laws of \emph{equivalence} relations and can be
 equipped with an
 efficient instance based on the \emph{disjoint set} data structure~\cite{1984_set_union_tarjan}.
 
 In the next section we present a library of basic graph transformation algorithms that
-can be reused by all instances discussed in this section.
+can be reused by all graph instances discussed in this section.

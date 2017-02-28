@@ -7,7 +7,7 @@ but which may seem tricky to prove (we encourage the reader to try):
 \begin{itemize}
     \item \hs{vertex x} $\ =\ $ \hs{vertices [x]} and \hs{edge x y} $\ =\ $ \hs{clique [x,y]}.
     \item \hs{vertices xs} $\ \subseteq\ $ \hs{clique xs}, where $x \subseteq y$ means
-    $x$ is a subgraph of $y$.
+    $x$ is a \emph{subgraph} of $y$, i.e. $V_x\subseteq V_y$ and $E_x\subseteq E_y$ hold.
     \item \hs{clique (xs ++ ys)} $\ =\ $ \hs{connect (}\hs{clique xs) (}\hs{clique ys)}.
 \end{itemize}
 
@@ -59,12 +59,12 @@ The above looks remarkably close to a semiring, with the only oddity being the s
 identity of the two operations. The following \emph{decomposition} law is
 what makes the algebra of graphs different:
 \[
-x \rightarrow y \rightarrow z = x \rightarrow y + x \rightarrow z + y \rightarrow z
+x \rightarrow y \rightarrow z = x \rightarrow y + x \rightarrow z + y \rightarrow z.
 \]
 
 \noindent
 Fig.~\ref{fig-axioms}(b) illustrates the law by showing that the triangle
-graph can be obtained in two different ways: by connecting three vertices
+graph can be obtained in two different ways: by connecting the three vertices
 of the triangle or by constructing its edges separately and overlaying them.
 
 Interestingly, the fact that overlay and connect share the same identity
@@ -102,7 +102,7 @@ of graph construction primitives in~\S\ref{sub-constructing} does satisfy them
 all and is therefore a valid \hs{Graph} instance. We will provide an
 implementation for this and other useful instances in~\S\ref{sec-a-la-carte}.
 Some of them will satisfy additional
-axioms, for example, by making the connect $\rightarrow$ operation commutative,
+axioms, for example, by making the connect operation commutative,
 we obtain undirected graphs.
 
 Algebraic graphs are \emph{complete} in the sense that it is possible to describe

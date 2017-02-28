@@ -31,8 +31,8 @@ isSubgraphOf :: (Graph g, Eq g) => g -> g -> Bool
 ~\\
 \begin{subfigure}[b]{0.49\linewidth}
 \begin{minted}[fontsize=\small]{haskell}
-domain       @\,\,@::@\,\,@Relation a -> Set a
-relation     @\,\,@::@\,\,@Relation a -> Set (a, a)
+domain       @\,\,@::@\,\,@Relation a     -> Set a
+relation     @\,\,@::@\,\,@Relation a     -> Set (a, a)
 adjacencyMap @\,\,@::@\,\,@AdjacencyMap a -> Map a (Set a)
 adjacencyList@\,\,@::@\,\,@AdjacencyMap a -> (a, [a])
 edgeList     @\,\,@::@\,\,@AdjacencyMap a -> [(a, a)]
@@ -48,13 +48,13 @@ topSort      @\,\,@::@\,\,@AdjacencyMap a -> Maybe [a]
 \hfill
 \begin{subfigure}[b]{0.47\linewidth}
 \begin{minted}[fontsize=\small]{haskell}
-path   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g] -> g
-circuit@\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g] -> g
-clique @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g] -> g
+path   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g]             -> g
+circuit@\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g]             -> g
+clique @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g]             -> g
 star   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Vertex g -> [Vertex g] -> g
-tree   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Tree (Vertex g) -> g
-forest @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Forest (Vertex g) -> g
-fold   @\,\,@::@\,\,@(Graph@\,\,\blk{g}@,@\,@Vertex@\,\,\blk{g}\,\teq@@\,\blk{a}@)@\,\,@=>@\,\,@Expr@\,\,\blk{a}\,\,@->@\,\,\blk{g}@
+tree   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Tree   (Vertex g)      -> g
+forest @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Forest (Vertex g)      -> g
+fold   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Expr   (Vertex g)      -> g
 \end{minted}
 \caption{Standard families of graphs and graph folding}
 \end{subfigure}
@@ -100,7 +100,7 @@ formed by the path neighbours:
 
 \begin{minted}{haskell}
 path :: Graph g => [Vertex g] -> g
-path []  = empty
+path [@@]  = empty
 path [x] = vertex x
 path xs  = edges $ @\std{zip}@ xs (@\std{tail}@ xs)
 \end{minted}
@@ -113,12 +113,12 @@ graph, or a \emph{cycle}. Let's express this in terms of the \hs{path} function:
 
 \begin{minted}{haskell}
 circuit :: Graph g => [Vertex g] -> g
-circuit []     = empty
+circuit [@@]     = empty
 circuit (x:xs) = path $ [x] ++ xs ++ [x]
 \end{minted}
 
 A \emph{star} graph can be obtained by connecting a centre vertex to a given
-list of \emph{leaves}:
+list of leaves:
 
 \begin{minted}{haskell}
 star :: Graph g => Vertex g -> [Vertex g] -> g
@@ -183,13 +183,13 @@ expressions without turning them into a concrete data structure. The functions o
 presented toolbox are listed in Fig.~\ref{fig-api}(e).
 
 One of the simplest transformations one can apply to a graph is to flip the
-direction of all of its edges. It's usually straightforward to implement but
-whatever data structure you use to represent graphs, you will spend at least
+direction of all of its edges. Transpose is usually straightforward to implement but
+whichever data structure you use to represent graphs, you will spend at least
 $O(1)$ time to modify it (say, by flipping the \hs{treatAsTransposed} flag);
 much more often you will have to traverse the data structure and flip every edge,
 resulting in $O(|V|+|E|)$ time complexity. However, by working with polymorphic
 graphs, i.e. graphs of type \hs{forall g. Graph g => g}, and using Haskell's
-zero-cost \hs{newtype} wrappers, we can implement transpose that takes zero time.
+zero-cost \hs{newtype} wrappers, we can implement transpose that takes zero time!
 
 Consider the following \hs{Graph} instance:
 
@@ -219,8 +219,8 @@ Let's check if this works:
 \end{minted}
 
 This has zero runtime cost, because all we do is wrapping and unwrapping
-the \hs{newtype}, which is guaranteed to be free or, more precisely, is handled
-by the GHC at the compile time.
+the \hs{newtype}, which is guaranteed to be free or, to be more precise, is handled
+by the GHC at compile time.
 
 To make sure \hs{transpose} is only applied to polymorphic graphs, we do not export
 the constructor \hs{T}, therefore the only way to call \hs{transpose} is to give it a
@@ -254,10 +254,10 @@ gmap :: Graph g => (a -> Vertex g) -> GraphFunctor a -> g
 gmap = flip gfor
 \end{minted}
 
-Essentially, we are defining another newtype wrapper, which pushes the
+Essentially, we are defining another \hs{newtype} wrapper, which pushes the
 given function all the way towards the vertices. This has no runtime cost,
 just as before, although the actual evaluation of the given function at each
-vertex will not be free, of course. Let's test this:
+vertex will not be free, of course. Let's test \hs{gmap}:
 
 \begin{minted}[frame=single]{haskell}
 @\ghci@ adjacencyList $ 1 * 2 * 3 + 4 * 5
@@ -403,7 +403,7 @@ As you can see, by inducing a clique on a subset of the vertices
 that we like \hs{(<3)}, we get a smaller clique, as expected.
 The cost of \hs{induce} for a given expression $g$ is $O(|g|)$.
 
-We can now -- at last -- implement the \hs{removeVertex} function, as
+Now we can implement the \hs{removeVertex} function, as
 was promised in the motivation section~\S\ref{sec-motivation}.
 
 \begin{minted}{haskell}
@@ -486,7 +486,7 @@ $x_u \rightarrow y_{uv}$ and $x_{uv} \rightarrow y_v$, where:
 \end{itemize}
 \noindent
 The overlay $x_u \rightarrow y_{uv} + x_{uv} \rightarrow y_v$ restores the missing
-vertices, because their copy is present in one of the subexpressions, but the
+vertices, because their copy is present in the other subexpression, but the
 edge $(u,v)$ is removed in both subexpressions and is therefore not restored.
 
 We demonstrate \hs{removeEdge} on two simple examples:
@@ -501,6 +501,11 @@ We demonstrate \hs{removeEdge} on two simple examples:
 [('H','e'),('e','l'),('l','o')]
 \end{minted}
 
+\noindent
+The \hs{removeEdge} function is expensive: given an expression of size $|g|$
+it may produce a transformed expression of the quadratic size $O(|g|^2)$. Many
+concrete \hs{Graph} instances provide a much faster equivalent of \hs{removeEdge}.
+
 \begin{figure}
 \centerline{\includegraphics[scale=0.3]{fig/De-Bruijn-construction.pdf}}
 \vspace{-4mm}
@@ -511,7 +516,7 @@ We demonstrate \hs{removeEdge} on two simple examples:
 
 \subsection{De Bruijn graphs}
 
-To convince the reader that we can construct reasonably sophisticated graphs using
+To convince the reader that one can easily construct sophisticated graphs using
 the presented library, let's try it on \emph{De Bruijn graphs}, an interesting
 combinatorial object that frequently shows up in computer engineering and
 bioinformatics. The implementation is very short, but requires some explanation:
@@ -542,11 +547,29 @@ of the solution:
     $\{0s, 1s\}$, i.e. the vertices whose suffix is $s$. Symmetrically,
     \hs{Right@\,$s$@} is replaced by a vertices $\{s0, s1\}$. This is captured
     by the function \hs{expand}.
-    \item The result is obtained by computing \hs{bind skeleton expand}.
+    \item The result is obtained by computing \hs{bind} \hs{skeleton} \hs{expand}.
 \end{itemize}
 
+Below we construct the De Bruijn graph shown in Fig.~\ref{fig-de-bruijn}.
+\begin{minted}[frame=single]{haskell}
+@\ghci@ edgeList $ deBruijn 3 "01"
+[("000","000"),("000","001"),("001","010"),("001","011"),("010","100"),("010","101")
+,("011","110"),("011","111"),("100","000"),("100","001"),("101","010"),("101","011")
+,("110","100"),("110","101"),("111","110"),("111","111")]
 
+@\ghci@ all (\(x,y) -> drop 1 x == dropEnd 1 y) $ edgeList $ deBruijn 9 "abc"
+True
 
+@\ghci@ Set.size $ domain $ deBruijn 9 "abc"
+19683 -- i.e. 3^9
+\end{minted}
 
-\subsection{Benchmarks}\label{sub-benchmarks}
+\noindent
+Note that a De Bruijn graph of dimension \hs{len} on the \hs{alphabet} has
+$|\hs{alphabet}|^\hs{len}$ vertices.
 
+\subsection{Summary}\label{sub-library-summary}
+
+We have presented a library of graph transformation algorithms that are available
+for any graph instance. The presented implementations are written in the vanilla
+functional programming style and, for the most part, are easy to understand.
