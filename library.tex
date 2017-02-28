@@ -462,18 +462,34 @@ instance Eq a => Graph (RemoveEdge a) where
     connect x y = RE $ \u v -> connect (removeVertex u $ re x u u) (re y u v) `overlay`
                                connect (re x u v) (removeVertex v $ re y v v)
 \end{minted}
-\vspace{1mm}
+\vspace{0mm}
 \begin{minted}{haskell}
 removeEdge :: (Eq@\,@(Vertex g),@\,@Graph g) => Vertex g -> Vertex g -> RemoveEdge@\,@(Vertex g) -> g
 removeEdge u v g = re g u v
 \end{minted}
 
 \noindent
-Here is how it works. Removing an edge from the \hs{empty} graph or a \hs{vertex} is easy:
-nothing needs to be done, because there are no edges. To remove an edge from an
-\hs{overlay}, we simply recurse to both subexpressions -- the overlay does not create
-any edges.
+Here is how it works. Removing an edge $(u,v)$ from the \hs{empty} graph
+or a \hs{vertex} is easy:
+nothing needs to be done, because there are no edges. To remove the edge from an
+\hs{overlay}, we simply recurse to both subexpressions, because the overlay does not create
+any edges. The \hs{connect} case $x \rightarrow y$ is handled by overlaying two graphs:
+$x_u \rightarrow y_{uv}$ and $x_{uv} \rightarrow y_v$, where:
 
+\begin{itemize}
+    \item $x_u = \hs{removeVertex}~u~x$ and $y_{uv} = \hs{removeEdge}~u~v~y$,
+    therefore $x_u \rightarrow y_{uv}$ definitely does not contain the edge $(u,v)$
+    at the cost of losing the vertices $u$ in the left-hand side $x_u$.
+    \item $y_v = \hs{removeVertex}~v~y$ and $x_{uv} = \hs{removeEdge}~u~v~x$,
+    therefore $x_{uv} \rightarrow y_v$ definitely does not contain the edge $(u,v)$
+    at the cost of losing the vertices $v$ in the right-hand side $y_v$.
+\end{itemize}
+\noindent
+The overlay $x_u \rightarrow y_{uv} + x_{uv} \rightarrow y_v$ restores the missing
+vertices, because their copy is present in one of the subexpressions, but the
+edge $(u,v)$ is removed in both subexpressions and is therefore not restored.
+
+We demonstrate \hs{removeEdge} on two simple examples:
 \begin{minted}[frame=single]{haskell}
 @\ghci@ edgeList $ path "Hello"
 [('H','e'),('e','l'),('l','l'),('l','o')]
@@ -484,6 +500,53 @@ any edges.
 @\ghci@ edgeList $ removeEdge 'l' 'l' $ path "Hello"
 [('H','e'),('e','l'),('l','o')]
 \end{minted}
+
+\begin{figure}
+\centerline{\includegraphics[scale=0.3]{fig/De-Bruijn-construction.pdf}}
+\vspace{-4mm}
+\caption{Constructing De Bruijn graphs\label{fig-de-bruijn}}
+\vspace{-4mm}
+\end{figure}
+
+
+\subsection{De Bruijn graphs}
+
+To convince the reader that we can construct reasonably sophisticated graphs using
+the presented library, let's try it on \emph{De Bruijn graphs}, an interesting
+combinatorial object that frequently shows up in computer engineering and
+bioinformatics. The implementation is very short, but requires some explanation:
+
+\begin{minted}{haskell}
+deBruijn :: (Graph g, Vertex g @\teq@ [a]) => Int -> [a] -> g
+deBruijn len alphabet = bind skeleton expand
+  where
+    overlaps = @\std{mapM}@ (@\std{const}@ alphabet) [2..len]
+    skeleton = edges    [        (Left s, Right s)   | s <- overlaps ]
+    expand v = vertices [ @\std{either}@ ([a] ++) (++ [a]) v | a <- alphabet ]
+\end{minted}
+
+The function builds a De Bruijn graph of dimension \hs{len} from symbols of the given
+\hs{alphabet}. The vertices of the graph are all possible words of length \hs{len}
+containing symbols of the \hs{alphabet}, and two words are connected $x \rightarrow y$
+whenever $x$ and $y$ match after we remove the first symbol of $x$ and the last symbol
+of $y$ (equivalently, when $x = az$ and $y = zb$ for some symbols $a$ and $b$).
+The process of construction of a 3-dimensional De Bruijn graph on the alphabet
+$\{0, 1\}$ is illustrated in Fig.~\ref{fig-de-bruijn}. Here are all the ingredients
+of the solution:
+\begin{itemize}
+    \item \hs{overlaps} contains all possible words of length \hs{len-1} that
+    correspond to overlaps of connected vertices.
+    \item \hs{skeleton} contains one edge per overlap, with \hs{Left} and
+    \hs{Right} vertices acting as temporary placeholders.
+    \item We replace a vertex \hs{Left@\,$s$@} with a subgraph of two vertices
+    $\{0s, 1s\}$, i.e. the vertices whose suffix is $s$. Symmetrically,
+    \hs{Right@\,$s$@} is replaced by a vertices $\{s0, s1\}$. This is captured
+    by the function \hs{expand}.
+    \item The result is obtained by computing \hs{bind skeleton expand}.
+\end{itemize}
+
+
+
 
 \subsection{Benchmarks}\label{sub-benchmarks}
 
