@@ -1,5 +1,9 @@
 # Algebraic Graphs with Class
 
+Get the PDF here: https://github.com/snowleopard/alga-paper/releases.
+
+## Abstract
+
 The paper presents a minimalistic, elegant and powerful approach to working
 with graphs in a functional programming language. We build on a rigorous
 mathematical foundation --- an algebra of graphs --- that allows to apply
@@ -15,5 +19,7 @@ and transitive graphs, as well as hypergraphs, by appropriately choosing
 the set of underlying axioms. The flexibility of the approach is
 demonstrated by a few examples, and by developing a library for construction
 and transformation of polymorphic graphs.
+
+## Implementation
 
 See https://github.com/snowleopard/alga for the source code and links to blog posts.
