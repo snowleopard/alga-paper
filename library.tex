@@ -70,7 +70,7 @@ bind          :: Graph g => GraphMonad a -> (a -> g) -> g
 induce        :: Graph g => (Vertex g -> Bool) -> GraphMonad (Vertex g) -> g
 removeVertex  :: (Graph g, Eq (Vertex g)) => Vertex g -> GraphMonad (Vertex g) -> g
 splitVertex   :: (Graph g, Eq (Vertex g)) => Vertex g -> [Vertex g] -> GraphMonad (Vertex g) -> g
-removeEdge    :: (Graph g, Eq (Vertex g)) => Vertex g -> Vertex g -> GraphMonad (Vertex g) -> g
+removeEdge    :: (Graph g, Eq (Vertex g)) => Vertex g -> Vertex g -> RemoveEdge (Vertex g) -> g
 box           :: (Graph g, Vertex g @\teq@ (u, v)) => GraphFunctor u -> GraphFunctor v -> g
 deBruijn      :: (Graph g, Vertex g @\teq@ [a]) => Int -> [a] -> g
 \end{minted}
