@@ -1,6 +1,6 @@
 # Algebraic Graphs with Class
 
-Get the PDF here: https://github.com/snowleopard/alga-paper/releases/download/icfp-submission/alga.pdf.
+Get the PDF here: https://github.com/snowleopard/alga-paper/releases/download/icfp-submission-archived/alga.pdf.
 
 ## Abstract
 
