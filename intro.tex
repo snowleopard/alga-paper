@@ -1,46 +1,49 @@
 %!TEX root = alga.tex
+\vspace{-1mm}
 \section{Introduction}\label{sec-intro}
 
 Graphs are ubiquitous in computing, yet working with graphs often requires
-painfully low-level fiddling with sets of vertices and edges. Building
-high-level abstractions is difficult, because the commonly used
-foundation -- the pair $(V, E)$ of vertex set $V$ and edge set $E$ -- is a source
-of partial functions. If $E \nsubseteq V \times V$, the pair is inconsistent and
-does not correspond to a graph. This inherent partiality often leaks through
-abstractions in state-of-the-art Haskell\footnote{In this paper
-we exclusively use Haskell, but the presented approach can be adapted to other
-programming languages.} graph libraries.
+painfully low-level fiddling with sets of vertices and edges. Building high-level
+abstractions is difficult, because the commonly used foundation -- the pair $(V, E)$
+of vertex set $V$ and edge set $E \subseteq V \times V$ -- is a source of partial
+functions. In Haskell\footnote{In this paper we exclusively use Haskell, but the
+presented approach can be adapted to other programming languages.} the pair can
+be represented by the following simple data type:
 
-For example, the \textsf{containers} library represents graphs by
-\emph{adjacency arrays}~\cite{1995_king_graphs}. To construct a graph
-one specifies the pair $(V,E)$, e.g.
-\hs{buildG (1,3) [(1,2),(2,3)]} constructs the graph with $V=\{1,2,3\}$ and
-$E=\{(1,2), (2,3)\}$. Note that \hs{buildG} is a partial function:
-\hs{buildG (1,2) [(3,1)]} is well-typed but fails with the
-\textsf{`index out of range'} error. Another popular library \textsf{fgl}
-uses the \emph{inductive graph representation} by~\citet{2001_erwig_inductive},
-but its graph construction API is based on sets of vertices and edges and also
-has partial functions, e.g. \hs{insEdge} can fail with
-the \textsf{`edge from non-existent vertex'} error. Both \textsf{containers}
-and \textsf{fgl} are treasure troves of graph algorithms, but it is easy to make an
-error when using them. It is possible to wrap these libraries in a safe
-interface, but the question is: What is the right interface for constructing graphs?
-Is there a better foundation than the pair $(V, E)$?
+\begin{minted}{haskell}
+  data G a = G { vertices :: [a], edges :: [(a,a)] }
+\end{minted}
+
+\noindent
+Now \hs{G [1,2,3] [(1,2),(2,3)]} is the graph with three vertices $V = \{1,2,3\}$ and
+two edges $E = \{(1,2), (2,3)\}$. The consistency invariant $E \subseteq V \times V$ holds.
+But what is \hs{G [1] [(1,2)]}? The edge refers to the non-existent vertex $2$, breaking the
+invariant, and there is no easy way to reflect this in types. Perhaps, our data type is just
+too simplistic; let us look at state-of-the-art graph libraries instead.
+
+The \textsf{containers} library is designed for performance and powers GHC itself. It
+represents graphs by \emph{adjacency arrays}~\cite{1995_king_graphs}, which are not
+better than our data type from the safety point of view: the \hs{buildG} graph construction
+function is partial and can fail with the \textsf{`index out of range'} error.
+Another popular library \textsf{fgl} uses the \emph{inductive graph
+representation}~\cite{2001_erwig_inductive}, but its graph construction API has similar
+partial functions, e.g. \hs{insEdge} can fail with the \textsf{`edge from non-existent
+vertex'} error.
+
+Both \textsf{containers} and \textsf{fgl} are treasure troves of graph algorithms,
+but it is easy to make an error when using these libraries. Is there a safe graph
+construction interface we can build on top?
 
 In this paper we present \emph{algebraic graphs} --- a new interface
 for graph construction and transformation. We abstract away from graph representation
-details and characterise graphs and two operations on them by a set of axioms,
-much like numbers with addition and multiplication are algebraically characterised
-by \emph{rings}~\cite{1999_maclane_algebra}. Our approach is based on the
-\emph{algebra of parameterised graphs}, a mathematical formalism used in digital
-circuit design~\cite{2014_algebra_mokhov}, which we simplify and adapt to the
-context of functional programming.
+details and characterise graphs by a set of axioms, much like numbers are algebraically
+characterised by \emph{rings}~\cite{1999_maclane_algebra}. Our approach is based on
+the \emph{algebra of parameterised graphs}, a mathematical formalism used in digital
+circuit design~\cite{2014_algebra_mokhov}, which we simplify and adapt to the context
+of functional programming.
 
-The operations on algebraic graphs that we chose, called \emph{overlay} and \emph{connect},
-have two important properties: i) they are closed on the set of graphs, i.e. are total
-functions, and ii) they can be used to construct any graph starting with the \emph{empty} and
-\emph{single-vertex} graphs. This leads us to the safe and minimalistic core of four graph
-construction primitives, as captured by the following data type:
+Algebraic graphs have a safe and minimalistic core of four graph construction primitives,
+as captured by the following data type:
 
 \begin{minted}{haskell}
 data Graph a = Empty
@@ -50,25 +53,19 @@ data Graph a = Empty
 \end{minted}
 
 \noindent
-To make the core more reusable we can also define the following type class\footnote{The
-name collision (\hs{data Graph} and \hs{class Graph}) is not a problem in practice,
-because the data type and type class are not used together and live in
-separate modules.}, whose instances must obey the axioms of the algebra:
+Here \hs{Empty} and \hs{Vertex} construct the \emph{empty} and \emph{single-vertex} graphs,
+respectively; \hs{Overlay} composes two graphs by taking the union of their vertices and
+edges, and \hs{Connect} is similar to \hs{Overlay} but also creates edges between vertices
+of the two graphs, see~Fig.~\ref{fig-construction} for examples. The \emph{overlay} and
+\emph{connect} operations have two important properties:
+i) they are closed on the set of graphs, i.e. are total functions, and ii) they can be used
+to construct any graph starting from the empty and single-vertex graphs.
+For example, \hs{Connect (Vertex 1) (Vertex 2)} is the graph with two vertices $\{1,2\}$
+and a single edge $(1,2)$. Malformed graph, such as \hs{G [1] [(1,2)]}, cannot be
+expressed in the core.
 
-\begin{minted}{haskell}
-class Graph g where
-    type Vertex g
-    empty   :: g
-    vertex  :: Vertex g -> g
-    overlay :: g -> g -> g
-    connect :: g -> g -> g
-\end{minted}
-
-\noindent
-The type class has usual inhabitants, such as the pair $(V,E)$, data types from
-\textsf{containers} and \textsf{fgl}, and other, stranger forms of life.
-The main goal of the paper is to demonstrate that \emph{this core is a solid
-foundation for working with graphs}. Our specific contributions are:
+The main goal of this paper is to demonstrate that \emph{this core is a safe, flexible
+and elegant foundation for working with graphs}. Our specific contributions are:
 \begin{itemize}
   \item Compared to existing libraries, algebraic graphs have a smaller
   core (just four graph construction primitives), are more compositional
@@ -91,10 +88,10 @@ foundation for working with graphs}. Our specific contributions are:
 %   graph construction primitives remain unchanged, which allows to define highly
 %   reusable polymorphic functions on graphs.
 
-  \item We develop a library\footnote{The library is on Hackage:
-  \url{http://hackage.haskell.org/package/algebraic-graphs}.} for polymorphic graph
-  construction and transformation on top of the algebraic core and
-  demonstrate its flexibility in \S\ref{sec-transformations}.
+  \item We develop a Haskell library\footnote{The library is on Hackage:
+  \url{http://hackage.haskell.org/package/algebraic-graphs}.}, named \textsf{Alga},
+  for algebraic graph construction and transformation and demonstrate its
+  flexibility in \S\ref{sec-transformations}.
   % Although the development of efficient algorithms for algebraic
   % graphs is outside the scope of this paper, we show that the library can cope
   % with graphs comprising billions of edges in the matter of

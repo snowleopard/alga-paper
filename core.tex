@@ -26,7 +26,8 @@
 \vspace{-1mm}
 \caption{$1 \rightarrow 2 + 2 \rightarrow 3$}
 \end{subfigure}
-\caption{Examples of graph construction\label{fig-construction}}
+\caption{Examples of graph construction. The overlay and connect operations are denoted
+by $+$ and $\rightarrow$, respectively.\label{fig-construction}}
 \end{figure*}
 
 \section{The core}\label{sec-core}
@@ -43,10 +44,9 @@ $V\subseteq \mathbb{V}$ is the set of its vertices and $E \subseteq V \times V$ 
 the set of its edges. As mentioned in~\S\ref{sec-intro}, when $E \nsubseteq V \times V$
 the pair $(V, E)$ is inconsistent and does not correspond to a graph.
 
-When one needs to guarantee the internal consistency of a data structure, such
-as the pair $(V, E)$, the standard solution is to define an abstract interface
-that encapsulates the data structure and provides a set of safe construction
-primitives. This is exactly the approach we take.
+When one needs to guarantee the internal consistency of a data structure, the standard
+solution is to define an abstract interface that encapsulates the data structure and
+provides a set of safe construction primitives. This is exactly the approach we take.
 
 \subsection{Constructing graphs}\label{sub-constructing}
 
@@ -63,8 +63,7 @@ respectively. The overlay operation $+$ is defined as
 (V_1, E_1) + (V_2, E_2)~~\defeq~~(V_1 \cup V_2, E_1 \cup E_2).
 \]
 That is, the overlay of two graphs comprises the union of their vertices and edges.
-
-The connect $\rightarrow$ operation is defined in a similar manner:
+The connect $\rightarrow$ operation is defined similarly:
 \[
 (V_1, E_1) \rightarrow (V_2, E_2)~~\defeq~~(V_1 \cup V_2, E_1 \cup E_2 \cup V_1 \times V_2).
 \]
@@ -75,13 +74,11 @@ with those of graph \emph{union} and \emph{join}, respectively,
 e.g see~\citet{1969_graph_theory_harary},
 however the arguments of union and join are typically assumed to have disjoint
 sets of vertices. We make no such assumptions, hence our definitions are total:
-any graphs can be composed using overlay and connect.
-}.
+any graphs can be composed using overlay and connect.}.
 Note that the connect operation is the only source of edges when constructing
 graphs. As we will see in~\S\ref{sec-algebra}, overlay and connect
 are very similar to addition and multiplication. We therefore give connect a higher
 precedence, i.e. $1 + 2 \rightarrow 3$ is interpreted as $1 + (2 \rightarrow 3)$.
-
 Fig.~\ref{fig-construction} illustrates a few examples of constructing graphs
 using the defined primitives:
 \begin{itemize}
@@ -89,20 +86,23 @@ using the defined primitives:
   \item $1 \rightarrow 2$ is the graph with an edge between vertices 1 and 2.
   \item $1 \rightarrow (2 + 3)$ is the graph with three vertices $\{1, 2, 3\}$
   and two edges $(1, 2)$ and $(1, 3)$.
-  \item $1 \rightarrow 1$ is the graph with vertex 1 and the \emph{self-loop}
-  going from the vertex to itself.
+  \item $1 \rightarrow 1$ is the graph with vertex 1 and the \emph{self-loop}.
   \item $1 \rightarrow 2 + 2 \rightarrow 3$ is the graph with three vertices $\{1, 2, 3\}$
   and two edges $(1, 2)$ and $(2, 3)$.
 \end{itemize}
 
-\noindent
-It is important to note that the core can be used to construct any graph by
-overlaying its vertices and pairs of connected vertices.
+As shown in~\S\ref{sec-intro}, the core can be represented by a simple
+data type \hs{Graph}, parameterised by the type of vertices~\hs{a}.
+To make the core more reusable, the next subsection defines the core type class that
+has usual inhabitants, such as the pair $(V,E)$, data types from
+\textsf{containers} and \textsf{fgl}, as well as other, stranger forms of life.
 
 \subsection{Type class}\label{sub-class}
 
 We abstract the graph construction primitives defined in \S\ref{sub-constructing}
-as the type class \hs{Graph}:
+as the type class \hs{Graph}\footnote{The name collision (\hs{data Graph}
+and \hs{class Graph}) is not a problem in practice, because the data type and type class
+are not used together and live in separate modules.}:
 
 \begin{minted}{haskell}
 class Graph g where

@@ -40,13 +40,13 @@ fold   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Graph  (Vertex g)      -> g
                 removeVertex  :: (Graph g, Eq (Vertex g)) => Vertex g -> GraphMonad (Vertex g) -> g
                 splitVertex   :: (Graph g, Eq (Vertex g)) => Vertex g -> [Vertex g] -> GraphMonad (Vertex g) -> g
                 removeEdge    :: (Graph g, Eq (Vertex g)) => Vertex g -> Vertex g -> RemoveEdge (Vertex g) -> g
-                box           :: (Graph g, Vertex g @\teq@ (u, v)) => GraphFunctor u -> GraphFunctor v -> g
+                box           :: (Graph g, Vertex g @\teq@ (a, b)) => GraphFunctor a -> GraphFunctor b -> g
                 deBruijn      :: (Graph g, Vertex g @\teq@ [a]) => Int -> [a] -> g
 \end{minted}
-\caption{Polymorphic graph construction and transformation}
+\caption{Polymorphic graph manipulation}
 \end{subfigure}
 \vspace{-4mm}
-\caption{API of the graph transformation library\label{fig-api}}
+\caption{API of the graph construction and transformation library.\label{fig-api}}
 \end{figure*}
 
 \section{Graph transformation library}\label{sec-transformations}
@@ -210,16 +210,16 @@ fewer instances.}:
 \vspace{2mm}
 \begin{minted}{haskell}
 newtype GraphFunctor a =
-    GF@\,@{ gfor@\,@::@\,\blk{forall}\,\blk{g}@.@\,@Graph g@\,@=>@\,@(a -> Vertex g)@\,@->@\,\blk{g}@ }
+    F { gfor@\,@::@\,\blk{forall}\,\blk{g}@.@\,@Graph g@\,@=>@\,@(a -> Vertex g)@\,@->@\,\blk{g}@ }
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
 instance Graph (GraphFunctor a) where
     type Vertex (GraphFunctor a) = a
-    empty       = GF@\,@$@\,@\_ -> empty
-    vertex  x   = GF@\,@$@\,@\f -> vertex (f x)
-    overlay x y = GF@\,@$@\,@\f -> overlay@\,@(gmap f x)@\,@(gmap f y)
-    connect x y = GF@\,@$@\,@\f -> connect@\,@(gmap f x)@\,@(gmap f y)
+    empty       = F $ \_ -> empty
+    vertex  x   = F $ \f -> vertex (f x)
+    overlay x y = F $ \f -> overlay@\,@(gmap f x)@\,@(gmap f y)
+    connect x y = F $ \f -> connect@\,@(gmap f x)@\,@(gmap f y)
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
@@ -277,7 +277,7 @@ takes $O(|V|^2)$ time. Since for many graphs we have $|g| = O(|V|)$, our
 
 \begin{figure*}
 \centerline{\includegraphics[scale=0.36]{fig/graph-product.pdf}}
-\caption{The Cartesian graph product of \hs{pentagon} and \hs{p4}\label{fig-product}}
+\caption{The Cartesian graph product of \hs{pentagon} and \hs{p4}.\label{fig-product}}
 \end{figure*}
 
 As another application of \hs{gmap}, we implement the \emph{Cartesian graph
@@ -287,8 +287,8 @@ either $x = x'$ and $(y, y') \in E_H$, or $y = y'$ and $(x,x')\in E_G$. An examp
 and \hs{p4} is shown in Fig.~\ref{fig-product}.
 
 \begin{minted}{haskell}
-box :: (Graph g, Vertex g @\teq@ (u, v))
-    => GraphFunctor u -> GraphFunctor v -> g
+box :: (Graph g, Vertex g @\teq@ (a, b))
+    => GraphFunctor a -> GraphFunctor b -> g
 box x y = @\std{foldr}@ overlay empty $ xs ++ ys
   where
     xs = @\std{map}@ (\b -> gmap (,b) x) . toList $ gmap id y
@@ -303,24 +303,24 @@ original graphs into pairs of vertices by \hs{gmap}. Note that we need to
 by \hs{gmap@\,id@} before passing it to the \hs{toList} function, which expects
 inputs of type \hs{ToList}. As you can see, we managed to implement quite
 a sophisticated graph transformation function \hs{box} fully polymorphically.
-One can use it to construct \emph{mesh} and \emph{torus} graphs as
+One can go further up in layers of abstraction and use \hs{box} to construct
+\emph{mesh} and \emph{torus} graphs as
 \hs{mesh xs ys = box (path xs) (path ys)} and
-\hs{torus xs ys = box (circuit xs) (circuit ys)}, resp.
+\hs{torus xs ys = box (circuit xs) (circuit ys)}, respectively.
 
-The \hs{toList} function can be implemented by the following simple \hs{newtype}
-wrapper:
+The \hs{toList} function is implemented as follows:
 
 \begin{minted}{haskell}
-newtype ToList a = TL { toList :: [a] }
+newtype ToList a = L { toList :: [a] }
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
 instance Graph (ToList a) where
      type Vertex (ToList a) = a
-     empty       = TL $ [@@]
-     vertex  x   = TL $ [x]
-     overlay x y = TL $ toList x ++ toList y
-     connect x y = TL $ toList x ++ toList y
+     empty       = L $ [@@]
+     vertex  x   = L $ [x]
+     overlay x y = L $ toList x ++ toList y
+     connect x y = L $ toList x ++ toList y
 \end{minted}
 
 \noindent
@@ -339,16 +339,16 @@ of a monad. We implement \hs{bind} by wrapping it into yet another \hs{newtype}:
 
 \begin{minted}{haskell}
 newtype GraphMonad a =
-    GM { bind :: forall g. Graph g => (a -> g) -> g }
+    M { bind :: forall g. Graph g => (a -> g) -> g }
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
 instance Graph (GraphMonad a) where
     type Vertex (GraphMonad a) = a
-    empty       = GM@\,@$@\,@\_ -> empty
-    vertex  x   = GM@\,@$@\,@\f -> f x
-    overlay x y = GM@\,@$@\,@\f -> overlay@\,@(bind x f)@\,@(bind y f)
-    connect x y = GM@\,@$@\,@\f -> connect@\,@(bind x f)@\,@(bind y f)
+    empty       = M $ \_ -> empty
+    vertex  x   = M $ \f -> f x
+    overlay x y = M $ \f -> overlay@\,@(bind x f)@\,@(bind y f)
+    connect x y = M $ \f -> connect@\,@(bind x f)@\,@(bind y f)
 \end{minted}
 
 The implementation is almost identical to \hs{gmap}: instead of
@@ -361,18 +361,16 @@ on the set of vertices that satisfy the predicate by turning all other
 vertices into empty subgraphs and flattening the result.
 
 \begin{minted}{haskell}
-induce :: Graph g => (Vertex g -> Bool)
-    -> GraphMonad (Vertex g) -> g
-induce p g = bind g $ \v ->
-    if p v then vertex v else empty
+induce :: Graph g
+    => (Vertex g -> Bool) -> GraphMonad (Vertex g) -> g
+induce p g = bind g $
+    \v -> if p v then vertex v else empty
 \end{minted}
 \vspace{1mm}
 \begin{minted}[frame=single,fontsize=\small]{haskell}
-@\ghci@ edgeList $ induce (<3) $ clique [0..4]
+@\ghci@ edgeList $ induce (<3) $ clique [0..10]
 [(0,1),(0,2),(1,2)]
 \end{minted}
-% @\ghci@ edgeList $ clique [0..4]
-% [(0,1),(0,2),(0,3),(0,4),(1,2),(1,3),(1,4),(2,3),(2,4),(3,4)]
 
 \noindent
 As you can see, by inducing a clique on a subset of the vertices
@@ -382,8 +380,8 @@ The cost of \hs{induce} for a given expression $g$ is $O(|g|)$.
 Now we can implement the \hs{removeVertex} function:
 
 \begin{minted}{haskell}
-removeVertex :: (Graph g, Eq (Vertex g)) => Vertex g
-    -> GraphMonad (Vertex g) -> g
+removeVertex :: (Graph g, Eq (Vertex g))
+    => Vertex g -> GraphMonad (Vertex g) -> g
 removeVertex v = induce (/= v)
 \end{minted}
 \vspace{1mm}
@@ -394,15 +392,15 @@ removeVertex v = induce (/= v)
 
 The polymorphic implementation of \hs{removeVertex} presented above takes
 $O(|g|)$ to remove a vertex from a graph expression $g$, which is
-slower than some concrete data structures.
+slower than some concrete graph data structures.
 
 We can also use the \hs{bind} function to split a vertex into a list of given vertices:
 
 \begin{minted}{haskell}
 splitVertex :: (Graph@\,\,g@,@\,@Eq@\,@(Vertex@\,\,g@)) => Vertex@\,\,g@
     -> [Vertex@\,\,g@] -> GraphMonad@\,@(Vertex@\,\,g@) -> g
-splitVertex v vs g = bind g $ \u ->
-    if u == v then vertices vs else vertex u
+splitVertex v vs g = bind g $
+    \u -> if u == v then vertices vs else vertex u
 \end{minted}
 \vspace{1mm}
 \begin{minted}[frame=single,fontsize=\small]{haskell}
@@ -440,10 +438,10 @@ easy, but the result is the most complicated \hs{newtype} in this paper.
 \end{minted}
 \vspace{0mm}
 \begin{minted}{haskell}
-            removeEdge :: (Eq@\,@(Vertex g),@\,@Graph g) => Vertex g -> Vertex g -> RemoveEdge@\,@(Vertex g) -> g
+            removeEdge :: (Eq (Vertex g), Graph g) => Vertex g -> Vertex g -> RemoveEdge (Vertex g) -> g
             removeEdge u v g = re g u v
 \end{minted}
-\caption{Removing an edge from a polymorphic graph}
+\caption{Removing an edge from a polymorphic graph.}
 \end{figure*}
 
 \noindent
@@ -486,11 +484,8 @@ concrete \hs{Graph} instances provide much faster equivalents of \hs{removeEdge}
 
 \begin{figure*}
 \centerline{\includegraphics[scale=0.3]{fig/De-Bruijn-construction.pdf}}
-\vspace{-4mm}
-\caption{Constructing De Bruijn graphs using the graph monad\label{fig-de-bruijn}}
-\vspace{-4mm}
+\caption{Constructing De Bruijn graphs using the graph monad.\label{fig-de-bruijn}}
 \end{figure*}
-
 
 \subsection{De Bruijn graphs}
 

@@ -16,7 +16,7 @@ combinations~(\S\ref{sub-preorder}), and even hypergraphs~(\S\ref{sub-hypergraph
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
-            data Relation a = R { domain :: Set a, relation :: Set (a, a) } deriving (Eq, Show)
+            data Relation a = R { domain :: Set a, relation :: Set (a, a) } deriving Eq
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
@@ -31,7 +31,7 @@ combinations~(\S\ref{sub-preorder}), and even hypergraphs~(\S\ref{sub-hypergraph
 \vspace{-2mm}
 \caption{Implementing the \hs{Graph} type class by a binary relation
 and the core graph construction primitives
-defined in~\S\ref{sub-constructing}\label{fig-relation}}
+defined in~\S\ref{sub-constructing}.\label{fig-relation}}
 \vspace{-2mm}
 \end{figure*}
 
@@ -349,7 +349,7 @@ constraint for functions that rely on the commutativity of the \hs{connect} meth
 \caption{3-decomposition:
     $1 \rightarrow 2 \rightarrow 3 \rightarrow 4 =
     1 \rightarrow 2 \rightarrow 3 + 1 \rightarrow 2 \rightarrow 4 +
-    1 \rightarrow 3 \rightarrow 4 + 2 \rightarrow 3 \rightarrow 4$
+    1 \rightarrow 3 \rightarrow 4 + 2 \rightarrow 3 \rightarrow 4$.
     \label{fig-3-decomposition}}
 \end{figure*}
 
