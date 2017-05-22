@@ -7,11 +7,10 @@
   for numerous discussions on algebraic graphs, their advice,
   criticism and encouragement. Without their help this work would
   have likely remained an unfinished toy project. Simon Peyton Jones
-  provided constructive suggestions on an earlier draft, helping to
-  substantially improve the introductory sections of the paper.
-  Last but not least, I'm very grateful to Victor Khomenko for
-  his contribution to the algebra of parameterised graphs that
-  forms the mathematical foundation of this work.
+  and Brent Yorgey provided constructive suggestions on an earlier draft,
+  helping to substantially improve the paper. Last but not least, I'm very
+  grateful to Victor Khomenko for his contribution to the algebra of
+  parameterised graphs that forms the mathematical foundation of this work.
 
   % This material is based upon work supported by the
   % \grantsponsor{GS100000001}{National Science

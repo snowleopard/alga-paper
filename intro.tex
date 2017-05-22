@@ -1,198 +1,106 @@
 %!TEX root = alga.tex
-\vspace{-1mm}
-\section{Introduction}
-\vspace{-1mm}
-Graphs are ubiquitous in computing, yet working with graphs often requires
-painfully low-level fiddling with sets of vertices and edges. We highlight this
-in the motivation section~\S\ref{sec-motivation} by examining the APIs of
-two state-of-the-art Haskell graph libraries\footnote{In this paper we exclusively
-use Haskell, but the presented approach can be adapted to other functional
-programming languages.}. To address this problem, we present
-\emph{algebraic graphs} --- a new interface for graph construction and
-transformation. Our specific contributions are:
+\section{Introduction}\label{sec-intro}
 
+Graphs are ubiquitous in computing, yet working with graphs often requires
+painfully low-level fiddling with sets of vertices and edges. Building
+high-level abstractions is difficult, because the commonly used
+foundation -- the pair $(V, E)$ of vertex set $V$ and edge set $E$ -- is a source
+of partial functions. If $E \nsubseteq V \times V$, the pair is inconsistent and
+does not correspond to a graph. This inherent partiality often leaks through
+abstractions in state-of-the-art Haskell\footnote{In this paper
+we exclusively use Haskell, but the presented approach can be adapted to other
+programming languages.} graph libraries.
+
+For example, the \textsf{containers} library represents graphs by
+\emph{adjacency arrays}~\cite{1995_king_graphs}. To construct a graph
+one specifies the pair $(V,E)$, e.g.
+\hs{buildG (1,3) [(1,2),(2,3)]} constructs the graph with $V=\{1,2,3\}$ and
+$E=\{(1,2), (2,3)\}$. Note that \hs{buildG} is partial:
+\hs{buildG (1,2) [(3,1)]} is well-typed but fails with the
+\textsf{`index out of range'} error. Another popular library \textsf{fgl}
+uses the \emph{inductive graph representation} by~\citet{2001_erwig_inductive},
+but its graph construction API is also based on sets of vertices and edges and
+has partial functions, e.g. \hs{insEdge} can fail with
+the \textsf{`edge from non-existent vertex'} error. Both \textsf{containers}
+and \textsf{fgl} are treasure troves of graph algorithms, but it is easy to make an
+error when using them. One can wrap these libraries in a safe interface, but the
+question is: What is the right interface for constructing graphs? Is there a better
+foundation than the pair $(V, E)$?
+
+We present \emph{algebraic graphs} --- a new interface
+for graph construction and transformation. We abstract away from graph representation
+details and characterise graphs and two operations on them by a set of axioms,
+much like numbers with addition and multiplication are algebraically characterised
+by \emph{rings}~\cite{1999_maclane_algebra}. The presented approach is inspired by the
+\emph{algebra of parameterised graphs}, a mathematical formalism used in digital
+circuit design~\cite{2014_algebra_mokhov}, which we distil and adapt to the context
+of functional programming.
+
+The two binary operations on algebraic graphs, called \emph{overlay} and \emph{connect},
+have two important properties: i) they are closed on the set of graphs, i.e. are total
+functions, and ii) they can be used to construct any graph starting from the \emph{empty} and
+single-\emph{vertex} graphs. This leads us to the safe and minimalistic core of four graph
+construction primitives, as captured by the following data type:
+
+\begin{minted}{haskell}
+data Graph a = Empty
+             | Vertex a
+             | Overlay (Graph a) (Graph a)
+             | Connect (Graph a) (Graph a)
+\end{minted}
+
+\noindent
+To make the core more reusable we also define the following type class\footnote{The
+name collision is not a problem in practice, because the data type and type class
+are not used together and can be defined in separate modules.}, whose
+instances must obey the axioms of the algebra:
+
+\begin{minted}{haskell}
+class Graph g where
+    type Vertex g
+    empty   :: g
+    vertex  :: Vertex g -> g
+    overlay :: g -> g -> g
+    connect :: g -> g -> g
+\end{minted}
+
+\noindent
+The main idea of the paper is that this simple core is as a solid foundation for
+working with graphs. The type class has classic inhabitants, such as the pair $(V,E)$,
+data types from \textsf{containers} and \textsf{fgl}, as well as new, unknown forms
+of life. Our contributions are:
 \begin{itemize}
   \item Compared to existing libraries, algebraic graphs have a smaller
-  \emph{core} (just four graph construction primitives), are more compositional
+  core (just four graph construction primitives), are more compositional
   (hence greater code reuse), and have no partial functions (hence fewer
   opportunities for usage errors). We present the core and justify these claims
   in \S\ref{sec-core}.
 
-  \item The core has a simple mathematical structure and is fully characterised
-  by a set of algebraic laws described in~\S\ref{sec-algebra}, which makes the
+  \item The core has a simple mathematical structure fully characterised
+  by a set of axioms~(\S\ref{sec-algebra}). This makes the
   proposed interface easier for testing and formal verification. We show that
   the core is \emph{complete}, i.e. any graph can be constructed, and \emph{sound},
   i.e. malformed graphs cannot be constructed.
 
-  \item Under the basic set of axioms, algebraic graphs correspond to unlabelled
-  directed graphs. As we show in~\S\ref{sec-a-la-carte}, by extending the algebra
+  \item Under the basic set of axioms, algebraic graphs correspond to directed
+  graphs with no edge labels. As we show in~\S\ref{sec-a-la-carte}, by extending
+  the algebra
   with additional axioms, it is possible to also represent undirected, reflexive
-  and transitive graphs, as well as hypergraphs. Importantly, the core
-  graph construction primitives remain unchanged, which allows to define highly
-  reusable polymorphic functions on graphs.
+  and transitive graphs, their combinations, as well as hypergraphs.
+%   Importantly, the core
+%   graph construction primitives remain unchanged, which allows to define highly
+%   reusable polymorphic functions on graphs.
 
-  \item We develop a library of polymorphic graph construction and
-  transformation functions on top of the algebraic core and demonstrate its
-  flexibility in \S\ref{sec-transformations}.
-  Although the development of efficient algorithms for algebraic
-  graphs is outside the scope of this paper, we show that the library can cope
-  with graphs comprising billions of edges in the matter of
-  seconds, which is sufficiently fast for many applications.
+  \item We develop a library\footnote{The library is on Hackage:
+  \url{http://hackage.haskell.org/package/algebraic-graphs}.} for polymorphic graph
+  construction and transformation on top of the algebraic core and
+  demonstrate its flexibility in \S\ref{sec-transformations}.
+  % Although the development of efficient algorithms for algebraic
+  % graphs is outside the scope of this paper, we show that the library can cope
+  % with graphs comprising billions of edges in the matter of
+  % seconds, which is sufficiently fast for many applications.
 \end{itemize}
 
 Graphs and functional programming have a long history. We review related
-work in \S\ref{sec-related}. Limitations of algebraic graphs and future
+work in \S\ref{sec-related}. Limitations of this work and future
 research directions are discussed in \S\ref{sec-discussion}.
-
-\section{Motivation}\label{sec-motivation}
-
-As a motivating
-example, we look at two popular Haskell graph libraries. The first one is
-available from the \textsf{containers} package and uses adjacency arrays
-to represent graphs,
-as described by~\citet{1995_king_graphs}. The second one
-is the \textsf{fgl} library, which is based on \emph{inductive graphs}
-by~\citet{2001_erwig_inductive}. Both libraries are
-actively maintained\footnote{As of writing, the latest versions of the libraries
-are \textsf{containers-0.5.10.1} and \textsf{fgl-5.5.3.0}.},
-have many users, and provide efficient implementations of
-fundamental graph algorithms. We argue, however, that using these libraries
-can be difficult and error-prone, and show how one can access their algorithmic
-power via a simple and safe interface based on algebraic graphs.
-
-\begin{figure}
-\begin{subfigure}[b]{0.28\linewidth}
-\begin{minted}[fontsize=\small]{haskell}
-import Data.Graph
-
--- Create graph 1 --> 2
-a :: Graph
-a = buildG (1,2) [(1,2)]
-
--- Add edge 3 --> 1 to a
-b :: Graph
-b = buildG (1,3) $
-    edges a ++ [(3,1)]
-
--- Remove vertex 2 from b
-c :: Graph
-c = buildG (1,3) $ filter
-    (notAdjacent 2) (edges b)
-\end{minted}
-\caption{\textsf{containers} library}
-\end{subfigure}
-\hfill
-\hfill
-\vrule
-\hfill
-\hfill
-\begin{subfigure}[b]{0.3\linewidth}
-\begin{minted}[fontsize=\small]{haskell}
-import Data.Graph.Inductive
-
--- Create graph 1 --> 2
-a :: Graph gr => gr () ()
-a = mkUGraph [1,2] [(1,2)]
-
--- Add edge 3 --> 1 to a
-b :: DynGraph gr => gr () ()
-b = insEdge (3,1,()) $
-    insNode (3,()) a
-
--- Remove vertex 2 from b
-c :: DynGraph gr => gr () ()
-c = delNode 2 b
-@ @
-\end{minted}
-\caption{\textsf{fgl} library}
-\end{subfigure}
-\hfill
-\vrule
-\hfill
-\hfill
-\begin{subfigure}[b]{0.35\linewidth}
-\begin{minted}[fontsize=\small,escapeinside=@@]{haskell}
-import Algebra.Graph
-
--- Create graph 1 --> 2
-a :: (Graph g, Vertex g @\teq@ Int) => g
-a = connect (vertex 1) (vertex 2)
-
--- Add edge 3 --> 1 to a
-b :: (Graph g, Vertex g @\teq@ Int) => g
-b = overlay a $
-    connect (vertex 3) (vertex 1)
-
--- Remove vertex 2 from b
-c :: (Graph g, Vertex g @\teq@ Int) => g
-c = removeVertex 2 b
-@ @
-\end{minted}
-\caption{Algebraic graphs}
-\end{subfigure}
-\caption{Simple transformations of unlabelled directed graphs\label{fig-example}}
-\vspace{-4mm}
-\end{figure}
-
-Fig.~\ref{fig-example} compares the \textsf{containers} and
-\textsf{fgl} libraries with algebraic graphs on a sequence of
-simple graph transformations: we start with graph $a$ containing the
-edge $1 \rightarrow 2$; graph $b$ is obtained by adding the vertex $3$
-and the edge $3 \rightarrow 1$ to $a$; finally, graph $c$ is obtained by removing
-the vertex $2$ from graph $b$.
-
-Fig.~\ref{fig-example}(a) shows how to realise these graph transformations
-using the \textsf{containers} library. To construct graph~$a$ one needs
-to specify both the set of vertices and edges. Note that
-\hs{buildG} is \emph{partial} and will fail if these sets are inconsistent.
-As an example, \hs{buildG (2,2) [(1,2)]} is well-typed but fails with the
-\textsf{`index out of range'} error, since the edge refers to the non-existent vertex 1.
-To construct $b$, we extend the vertex set and append the
-edge $3 \rightarrow 1$ to the list of edges of $a$; the \textsf{containers} library does
-not support sharing of common subgraphs and new memory is allocated for
-storing the whole graph $b$. Furthermore, the library is
-\emph{incomplete}: the graphs whose vertex sets are not contiguous subsets of
-integers cannot be represented. Graph $c$ is an example: its vertex set is
-$\{1,3\}$ and the best we can do is to remove all edges adjacent to vertex 2
-leaving it isolated in the resulting graph.
-
-The \textsf{fgl} library defines the type class \hs{Graph} and its subclass
-\hs{DynGraph} for working with static (unchangeable) and dynamic (changeable)
-graphs, comprising 10 class methods in total. As shown in Fig.~\ref{fig-example}(b),
-to create graph~$a$ we call the \hs{mkUGraph} method, which is similar to
-\hs{buildG} from the \textsf{containers} library and also needs to deal with the
-awkward case when the sets of vertices and edges are inconsistent; instead of
-failing with an error, \textsf{fgl} chooses to ignore edges adjacent to non-existent
-vertices, hence \hs{mkUGraph [}\hs{] [(1,2)]} creates the empty graph. To construct
-graph~$b$, we first add the vertex 3 to $a$ and then add the edge $3 \rightarrow 1$.
-If we skip the first step, \hs{insEdge} fails with the
-\textsf{`edge from non-existent vertex'} error.
-Note that \textsf{fgl} is optimised for working with labelled graphs, which requires
-using the dummy label \hs{()} for vertices and edges when working with unlabelled
-graphs. Graph~$c$ is obtained in a straightforward way by calling the \hs{delNode}
-function. As one can see, the resulting expression is still polymorphic, admitting
-multiple possible implementations. The default implementation of the \hs{DynGraph}
-class supports subgraph sharing, thus being more memory efficient compared to
-the \textsf{containers} library.
-
-Algebraic graphs are built on the minimalistic type class \hs{Graph} comprising
-only four methods \hs{empty}, \hs{vertex}, \hs{overlay} and \hs{connect}, as
-defined in \S\ref{sec-core}. The code in
-Fig.~\ref{fig-example}(c) intentionally avoids helper library functions (apart
-from \hs{removeVertex}), performing the intended graph transformations using the
-bare-metal primitives of the algebra. Graph~$a$ is constructed by \emph{connecting}
-vertices 1 and 2. This definition has no hidden partiality or ambiguity.
-Unlike the \textsf{containers} and \textsf{fgl} libraries, the type of vertices
-is not fixed to \hs{Int}, e.g. we could have used \hs{Integer} instead.
-Graph~$b$ is constructed by \emph{overlaying} $a$ with the edge $3 \rightarrow 1$.
-To remove the vertex 2, we use the polymorphic library function
-\hs{removeVertex} that essentially replaces the vertex with the \hs{empty} graph,
-as explained in \S\ref{sec-transformations}. We argue that the algebraic
-interface is superior, because it abstracts away such details as sets of
-vertices and edges, eliminating the need for partial functions.
-
-The main idea of this paper is that the proposed minimalistic core of four graph
-construction primitives provides a safe and flexible algebraic interface
-for working with graphs, and also unlocks a new world of graph instances, with
-classic inhabitants from \textsf{containers} and \textsf{fgl}, as well
-as new, unknown forms of life.

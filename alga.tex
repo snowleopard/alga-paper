@@ -5,7 +5,8 @@
 %% For final camera-ready submission
 %\documentclass[acmlarge]{acmart}\settopmatter{}
 %% For an author version
-\documentclass[acmlarge,authorversion]{acmart}\settopmatter{}
+%\documentclass[sigplan,anonymous]{acmart}\settopmatter{}
+\documentclass[sigplan]{acmart}\settopmatter{}
 
 %% Some recommended packages.
 \usepackage{booktabs}   %% For formal tables:
@@ -26,27 +27,18 @@
 \makeatletter\if@ACM@journal\makeatother
 %% Journal information (used by PACMPL format)
 %% Supplied to authors by publisher for camera-ready submission
-%\acmJournal{PACMPL}
-%\acmVolume{1}
-%\acmNumber{1}
-%\acmArticle{1}
-%\acmYear{2017}
-%\acmMonth{1}
-%\acmDOI{10.1145/nnnnnnn.nnnnnnn}
-
-\acmJournal{X}
-\acmVolume{X}
-\acmNumber{X}
-\acmArticle{X}
+\acmJournal{PACMPL}
+\acmVolume{1}
+\acmNumber{1}
+\acmArticle{1}
 \acmYear{2017}
-\acmMonth{2}
-\acmDOI{DRAFT}
-
+\acmMonth{1}
+\acmDOI{10.1145/nnnnnnn.nnnnnnn}
 \startPage{1}
 \else\makeatother
 %% Conference information (used by SIGPLAN proceedings format)
 %% Supplied to authors by publisher for camera-ready submission
-\acmConference[PL'17]{ACM SIGPLAN Conference on Programming Languages}{January 01--03, 2017}{New York, NY, USA}
+\acmConference{Haskell Symposium}{September 2017}{Oxford, UK}
 \acmYear{2017}
 \acmISBN{978-x-xxxx-xxxx-x/YY/MM}
 \acmDOI{10.1145/nnnnnnn.nnnnnnn}
@@ -67,7 +59,7 @@
 
 \begin{document}
 
-\title{Algebraic Graphs with Class}
+\title{Functional Pearl: Algebraic Graphs with Class}
                                         %% [Short Title] is optional;
                                         %% when present, will be used in
                                         %% header instead of Full Title.
@@ -75,7 +67,7 @@
                                         %% \titlenote is optional;
                                         %% can be repeated if necessary;
                                         %% contents suppressed with 'anonymous'
-\subtitle{(under review, feedback is sought)\vspace{-2.5mm}}
+%\subtitle{(under review, feedback is sought)\vspace{-2.5mm}}
                                         %% \subtitle is optional
 %\subtitlenote{with subtitle note}      %% \subtitlenote is optional;
                                         %% can be repeated if necessary;
@@ -122,20 +114,19 @@
 %% Note: \begin{abstract}...\end{abstract} environment must come
 %% before \maketitle command
 \begin{abstract}
-The paper presents a minimalistic, elegant and powerful approach to working
-with graphs in a functional programming language. We build on a rigorous
+The paper presents a minimalistic and elegant approach to working
+with graphs in Haskell. It is built on a rigorous
 mathematical foundation --- an algebra of graphs --- that allows us to apply
 equational reasoning for proving the correctness of graph transformation
-algorithms. Algebraic graphs let us avoid partial functions, typically
-required for handling `malformed graphs' that contain an edge referring to
-a non-existent vertex. Such malformed graphs are impossible to specify
-algebraically, which helps to liberate APIs of existing graph libraries
+algorithms. Algebraic graphs let us avoid partial functions typically
+caused by `malformed graphs' that contain an edge referring to
+a non-existent vertex. This helps to liberate APIs of existing graph libraries
 from partial functions.
 
-We show that the algebra of graphs can represent directed, undirected, reflexive
+The algebra of graphs can represent directed, undirected, reflexive
 and transitive graphs, as well as hypergraphs, by appropriately choosing
 the set of underlying axioms. The flexibility of the approach is
-demonstrated by a few examples, and by developing a library for construction
+demonstrated by developing a library for construction
 and transformation of polymorphic graphs.
 \end{abstract}
 
@@ -148,18 +139,12 @@ and transformation of polymorphic graphs.
 <concept_desc>Mathematics of computing~Graph theory</concept_desc>
 <concept_significance>500</concept_significance>
 </concept>
-<concept>
-<concept_id>10003752.10010124.10010125.10010127</concept_id>
-<concept_desc>Theory of computation~Functional constructs</concept_desc>
-<concept_significance>500</concept_significance>
-</concept>
-</ccs2012>
 \end{CCSXML}
 
 \ccsdesc[500]{Mathematics of computing~Graph theory}
-\ccsdesc[500]{Theory of computation~Functional constructs}%% End of generated code
+%\ccsdesc[500]{Theory of computation~Functional constructs}%% End of generated code
 
-\keywords{algebra, graph theory, polymorphism, functional programming}
+\keywords{algebra, graph theory, Haskell}
 
 %% Note: \maketitle command must come after title commands, author
 %% commands, abstract environment, Computing Classification System
@@ -185,11 +170,10 @@ and transformation of polymorphic graphs.
   for numerous discussions on algebraic graphs, their advice,
   criticism and encouragement. Without their help this work would
   have likely remained an unfinished toy project. Simon Peyton Jones
-  provided constructive suggestions on an earlier draft, helping to
-  substantially improve the introductory sections of the paper.
-  Last but not least, I'm very grateful to Victor Khomenko for
-  his contribution to the algebra of parameterised graphs that
-  forms the mathematical foundation of this work.
+  and Brent Yorgey provided constructive suggestions on an earlier draft,
+  helping to substantially improve the paper. Last but not least, I'm very
+  grateful to Victor Khomenko for his contribution to the algebra of
+  parameterised graphs that forms the mathematical foundation of this work.
 
   % This material is based upon work supported by the
   % \grantsponsor{GS100000001}{National Science

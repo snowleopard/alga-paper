@@ -1,60 +1,29 @@
 %!TEX root = alga.tex
-\begin{figure}
-\begin{subfigure}[b]{0.27\linewidth}
-\begin{minted}[fontsize=\small]{haskell}
-class Graph g where
-    type Vertex g
-    empty   :: g
-    vertex  :: Vertex g -> g
-    overlay :: g -> g -> g
-    connect :: g -> g -> g
-\end{minted}
-\caption{The core type class}
-\end{subfigure}
-\hfill
-\hfill
-\vrule
-\hfill
-\hfill
-\begin{subfigure}[b]{0.68\linewidth}
+\begin{figure*}
+\begin{subfigure}[b]{0.56\linewidth}
 \begin{minted}[fontsize=\small]{haskell}
 vertices     :: Graph g => [Vertex g] -> g
+clique       :: Graph g => [Vertex g] -> g
 edge         :: Graph g => Vertex g -> Vertex g -> g
 edges        :: Graph g => [(Vertex g, Vertex g)] -> g
 graph        :: Graph g => [Vertex g] -> [(Vertex g, Vertex g)] -> g
-gen          :: (Graph g, Arbitrary (Vertex g)) => Gen g
 isSubgraphOf :: (Graph g, Eq g) => g -> g -> Bool
 \end{minted}
 \caption{Derived graph construction primitives and the subgraph relation}
 \end{subfigure}
-~\\
-~\\
-\begin{subfigure}[b]{0.49\linewidth}
-\begin{minted}[fontsize=\small]{haskell}
-domain       @\,\,@::@\,\,@Relation a     -> Set a
-relation     @\,\,@::@\,\,@Relation a     -> Set (a, a)
-adjacencyMap @\,\,@::@\,\,@AdjacencyMap a -> Map a (Set a)
-adjacencyList@\,\,@::@\,\,@AdjacencyMap a -> (a, [a])
-edgeList     @\,\,@::@\,\,@AdjacencyMap a -> [(a, a)]
-dfsForest    @\,\,@::@\,\,@AdjacencyMap a -> Forest a
-topSort      @\,\,@::@\,\,@AdjacencyMap a -> Maybe [a]
-\end{minted}
-\caption{Deconstructing/consuming graphs}
-\end{subfigure}
 \hfill
 \hfill
 \vrule
 \hfill
 \hfill
-\begin{subfigure}[b]{0.47\linewidth}
+\begin{subfigure}[b]{0.4\linewidth}
 \begin{minted}[fontsize=\small]{haskell}
 path   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g]             -> g
 circuit@\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g]             -> g
-clique @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => [Vertex g]             -> g
 star   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Vertex g -> [Vertex g] -> g
 tree   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Tree   (Vertex g)      -> g
 forest @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Forest (Vertex g)      -> g
-fold   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Expr   (Vertex g)      -> g
+fold   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Graph  (Vertex g)      -> g
 \end{minted}
 \caption{Standard families of graphs and graph folding}
 \end{subfigure}
@@ -78,22 +47,20 @@ deBruijn      :: (Graph g, Vertex g @\teq@ [a]) => Int -> [a] -> g
 \end{subfigure}
 \vspace{-3mm}
 \caption{API of the graph transformation library\label{fig-api}}
-\end{figure}
+\end{figure*}
 
-\newpage
 \section{Graph transformation library}\label{sec-transformations}
 
 In this section we demonstrate the flexibility of the algebraic graph core,
 and develop a graph transformation library whose API is summarised in
-Fig.~\ref{fig-api}. The parts of the API shown in Fig.~\ref{fig-api}(a-c)
-were defined in~\S\ref{sec-algebra} and~\S\ref{sec-a-la-carte}.
+Fig.~\ref{fig-api}. The part of the API shown in Fig.~\ref{fig-api}(a)
+was defined in~\S\ref{sec-algebra}.
 
 \subsection{Standard families of graphs}\label{sub-families}
 
 This subsection defines a few simple functions for constructing graphs from
-standard graph families. An example is the family of \emph{clique} graphs that has
-already been covered in \S\ref{sec-algebra}, where we defined the function
-\hs{clique}. See Fig.~\ref{fig-api}(d) for the list of all functions we define.
+standard graph families. See Fig.~\ref{fig-api}(b) for the list of all functions
+we define.
 
 A \emph{path} on a list of vertices can be constructed from the \hs{edges}
 formed by the path neighbours:
@@ -130,7 +97,7 @@ pair of mutually recursive functions:
 
 \begin{minted}{haskell}
 tree :: Graph g => Tree (Vertex g) -> g
-tree (Node r f) = overlay (star r $ @\std{map}@ rootLabel f) (forest f)
+tree (Node r f) = star@\,\blk{r}\,@(@\std{map}\,\blk{rootLabel}\,\blk{f}@)@\,@`overlay`@\,\blk{forest}\,@f
 
 forest :: Graph g => Forest (Vertex g) -> g
 forest = @\std{foldr}@ overlay empty . @\std{map}@ tree
@@ -143,44 +110,45 @@ definitions of the data types \hs{Tree} and \hs{Forest} from the
 \textsf{containers} library for completeness:
 
 \begin{minted}{haskell}
-data Tree a = Node { rootLabel :: a, subForest :: Forest a }
+data Tree a = Node@\,@{ rootLabel :: a,@\,@subForest :: Forest a }
 
 type Forest a = [Tree a]
 \end{minted}
 
 Below we experiment with these functions and their properties, and define
 graphs \hs{pentagon} and \hs{p4} that will be used in subsection~\S\ref{sub-functor}
-and in particular will feature in Fig.~\ref{fig-product}.
+and in particular will feature in Fig.~\ref{fig-product}. The helper function
+\hs{edgeList} is defined as \hs{edgeList = Set.toList . relation}.
 
-\begin{minted}[frame=single]{haskell}
+\begin{minted}[frame=single,fontsize=\small]{haskell}
 @\ghci@ pentagon = circuit [1..5]
 @\ghci@ p4 = path "abcd"
 
 @\ghci@ :t pentagon
-@\blk{pentagon}@ :: (Graph g, Num (Vertex g), Enum (Vertex g)) => g
+@\blk{pentagon}@ :: (Graph g,@\,@Num (Vertex g),@\,@Enum (Vertex g)) => g
+
+@\ghci@ isSubgraphOf (path [1..5]) (pentagon :: Relation Int)
+True
 
 @\ghci@ edgeList p4
 [('a','b'),('b','c'),('c','d')]
 
-@\ghci@ quickCheck $ \xs -> path xs `isSubgraphOf` (circuit xs :: Relation Int)
-@\blk{+++ OK, passed 100 tests.}@
+@\ghci@ t = Node 1 [Node 2 [], Node 3 [Node 4 [], Node 5 []]]
+@\ghci@ edgeList (tree t)
+[(1,2),(1,3),(3,4),(3,5)]
 
-@\ghci@ adjacencyList $ forest $ dfsForest (1 + 2 * 3 + 4 * (5 + 6))
-[(1,[@@]),(2,[3]),(3,[@@]),(4,[5,6]),(5,[@@]),(6,[@@])]
-
-@\ghci@ quickCheck $ \xs -> path xs == (clique xs :: Transitive Int)
-@\blk{+++ OK, passed 100 tests.}@
+@\ghci@ p4 == (clique "abcd" :: Transitive Char)
+True
 \end{minted}
 
 The last property deserves a remark: the transitive closure of a path graph
-is the clique on the same set of vertices, therefore they are considered equal
-when interpreted by the \hs{Transitive} graph instance.
+is the directed clique on the same set of vertices, therefore they are considered equal
+by the \hs{Transitive} graph instance.
 
 \subsection{Graph transpose}
 
 In the rest of this section we present a toolbox for transforming polymorphic graph
-expressions without turning them into a concrete data structure. The functions in the
-presented toolbox are listed in Fig.~\ref{fig-api}(e).
+expressions. The functions in the presented toolbox are listed in Fig.~\ref{fig-api}(c).
 
 One of the simplest transformations one can apply to a graph is to flip the
 direction of all of its edges. Transpose is usually straightforward to implement but
@@ -189,12 +157,12 @@ $O(1)$ time to modify it (say, by flipping the \hs{treatAsTransposed} flag);
 much more often you will have to traverse the data structure and flip every edge,
 resulting in $O(|V|+|E|)$ time complexity. However, by working with polymorphic
 graphs, i.e. graphs of type \hs{forall g. Graph g => g}, and using Haskell's
-zero-cost \hs{newtype} wrappers, we can implement transpose that takes zero time!
+zero-cost \hs{newtype} wrappers, we can implement transpose that takes zero time.
 
 Consider the following \hs{Graph} instance:
 
 \begin{minted}{haskell}
-newtype Transpose g = T { transpose :: g } deriving (Arbitrary, Eq, Show)
+newtype Transpose g = T { transpose :: g } deriving Eq
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
@@ -203,14 +171,14 @@ instance Graph g => Graph (Transpose g) where
     empty       = T empty
     vertex      = T . vertex
     overlay x y = T $ overlay (transpose x) (transpose y)
-    connect x y = T $ connect (transpose y) (transpose x) -- flip it!
+    connect x y = T $ connect (transpose y) (transpose x)
 \end{minted}
 
 \noindent
 That is, we wrap a graph in a \hs{newtype} flipping the order of \hs{connect} arguments.
 Let's check if this works:
 
-\begin{minted}[frame=single]{haskell}
+\begin{minted}[frame=single,fontsize=\small]{haskell}
 @\ghci@ edgeList $ 1 * (2 + 3) * 4
 [(1,2),(1,3),(1,4),(2,4),(3,4)]
 
@@ -220,7 +188,7 @@ Let's check if this works:
 
 The \hs{transpose} has zero runtime cost, because all we do is wrapping and unwrapping
 the \hs{newtype}, which is guaranteed to be free or, to be more precise, is handled
-by the GHC at compile time.
+by GHC at compile time.
 
 To make sure \hs{transpose} is only applied to polymorphic graphs, we do not export
 the constructor \hs{T}, therefore the only way to call \hs{transpose} is to give it a
@@ -233,24 +201,27 @@ We now implement a function \hs{gmap} that given a function \hs{a}~\hs{->}~\hs{b
 and a polymorphic graph whose vertices are of type \hs{a} will produce a
 polymorphic graph with vertices of type \hs{b} by applying the function
 to each vertex. This is almost a \hs{Functor} but it does not have the usual
-type signature, because \hs{Graph} is not a higher-kinded type:
+type signature, because \hs{Graph} is not a higher-kinded type\footnote{It is
+possible to define a higher-kinded version of \hs{Graph}, but it has
+fewer instances.}:
 
 \vspace{2mm}
 \begin{minted}{haskell}
-newtype GraphFunctor a = GF { gfor :: forall g. Graph g => (a -> Vertex g) -> g }
+newtype GraphFunctor a = GF {
+    gfor :: forall g. Graph g => (a -> Vertex g) -> g }
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
 instance Graph (GraphFunctor a) where
     type Vertex (GraphFunctor a) = a
-    empty       = GF $ \_ -> empty
-    vertex  x   = GF $ \f -> vertex (f x)
-    overlay x y = GF $ \f -> overlay (gmap f x) (gmap f y)
-    connect x y = GF $ \f -> connect (gmap f x) (gmap f y)
+    empty       = GF@\,@$@\,@\_ -> empty
+    vertex  x   = GF@\,@$@\,@\f -> vertex (f x)
+    overlay x y = GF@\,@$@\,@\f -> overlay (gmap f x) (gmap f y)
+    connect x y = GF@\,@$@\,@\f -> connect (gmap f x) (gmap f y)
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
-gmap :: Graph g => (a -> Vertex g) -> GraphFunctor a -> g
+gmap :: Graph@\,\blk{g}@ => (a -> Vertex@\,\blk{g}@) -> GraphFunctor@\,\blk{a}@ -> g
 gmap = flip gfor
 \end{minted}
 
@@ -260,34 +231,34 @@ This has no runtime cost,
 just as before, although the actual evaluation of the given function at each
 vertex will not be free, of course. Let's test \hs{gmap}:
 
-\begin{minted}[frame=single]{haskell}
-@\ghci@ adjacencyList $ 1 * 2 * 3 + 4 * 5
-[(1,[2,3]),(2,[3]),(3,[@@]),(4,[5]),(5,[@@])]
+\begin{minted}[frame=single,fontsize=\small]{haskell}
+@\ghci@ edgeList $ 1 * 2 * 3 + 4 * 5
+[(1,2),(1,3),(2,3),(4,5)]
 
-@\ghci@ adjacencyList $ gmap (+1) $ 1 * 2 * 3 + 4 * 5
-[(2,[3,4]),(3,[4]),(4,[@@]),(5,[6]),(6,[@@])]
+@\ghci@ edgeList $ gmap (+1) $ 1 * 2 * 3 + 4 * 5
+[(2,3),(2,4),(3,4),(5,6)]
 \end{minted}
 \vspace{-1mm}
 As you can see, we can increment the value of each vertex by mapping the function
 \hs{(+1)} over the graph. The resulting expression is a polymorphic graph, as desired.
-Again, we have done some useful work without turning the graph into a concrete data
-structure. Note that \hs{gmap} satisfies the usual functor laws
+Note that \hs{gmap} satisfies the functor laws
 \hs{gmap id = id} and \hs{gmap f@ . @}\hs{gmap g@ = @}\hs{gmap (f . g)}, because
-it does not change the structure of the given graph expression and only pushes
+it does not change the structure of the given expression and only pushes
 the given function down to its leaves -- the vertices.
 
 An alert reader might wonder: what happens if the function maps two different
-vertices into the same one? They will be merged! Merging graph vertices is
-a useful graph transformation, so let's define it in terms of \hs{gmap}:
+vertices into the same one? They will be merged. Merging graph vertices is
+a useful graph transformation, so let us define it in terms of \hs{gmap}:
 
 \begin{minted}{haskell}
-mergeVertices :: Graph g => (Vertex g -> Bool) -> Vertex g -> GraphFunctor (Vertex g) -> g
+mergeVertices :: Graph g => (Vertex g -> Bool) -> Vertex g
+                         -> GraphFunctor (Vertex g) -> g
 mergeVertices p v = gmap $ \u -> if p u then v else u
 \end{minted}
 \vspace{-1mm}
-\begin{minted}[frame=single]{haskell}
-@\ghci@ adjacencyList $ mergeVertices odd 3 $ 1 * 2 * 3 + 4 * 5
-[(2,[3]),(3,[2,3]),(4,[3])]
+\begin{minted}[frame=single,fontsize=\small]{haskell}
+@\ghci@ edgeList $ mergeVertices odd 3 $ 1 * 2 * 3 + 4 * 5
+[(2,3),(3,2),(3,3),(4,3)]
 \end{minted}
 \vspace{-1mm}
 The function takes a predicate on graph vertices and a target vertex and
@@ -302,13 +273,13 @@ the resulting matrix from scratch, which takes $O(|V|^2)$ time. Since for
 many graphs we have $|g| = O(|V|)$, our \hs{mergeVertices}
 may be quadratically faster than the matrix-based one.
 
-\begin{figure}
+\begin{figure*}
 \centerline{\includegraphics[scale=0.36]{fig/graph-product.pdf}}
 \vspace{-4mm}
 \caption{The Cartesian graph product of \hs{pentagon} and \hs{p4}, i.e. the graph
 \hs{box@\,\,@}\hs{pentagon@\,\,@}\hs{p4}\label{fig-product}}
 \vspace{-3mm}
-\end{figure}
+\end{figure*}
 
 As another application of \hs{gmap}, we implement the \emph{Cartesian graph
 product} operation \hs{box}, or $G~~\square~~H$, where the resulting vertex set is
@@ -317,7 +288,8 @@ either $x = x'$ and $(y, y') \in E_H$, or $y = y'$ and $(x,x')\in E_G$. An examp
 and \hs{p4} is shown in Fig.~\ref{fig-product}.
 
 \begin{minted}{haskell}
-box :: (Graph g, Vertex g @\teq@ (u, v)) => GraphFunctor u -> GraphFunctor v -> g
+box :: (Graph g, Vertex g @\teq@ (u, v))
+    => GraphFunctor u -> GraphFunctor v -> g
 box x y = @\std{foldr}@ overlay empty $ xs ++ ys
   where
     xs = @\std{map}@ (\b -> gmap (,b) x) . toList $ gmap id y
@@ -337,11 +309,11 @@ The \hs{toList} function can be implemented by the following simple \hs{newtype}
 wrapper:
 
 \begin{minted}{haskell}
-newtype ToList a = TL { toList :: [a] } deriving Show
+newtype ToList a = TL { toList :: [a] }
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
-instance Graph (ToList a) where -- note the lack of Eq a constraint
+instance Graph (ToList a) where
      type Vertex (ToList a) = a
      empty       = TL $ [@@]
      vertex  x   = TL $ [x]
@@ -361,23 +333,23 @@ list \hs{[1,1]}.
 What do the operations of removing a vertex and splitting a vertex have in common?
 They both can be implemented by replacing each vertex of a graph with a (possibly empty)
 subgraph and flattening the result. You may recognise this as the \hs{bind} operation
-of a monad. We are going to implement \hs{bind}
-by wrapping it into yet another \hs{newtype}:
+of a monad. We implement \hs{bind} by wrapping it into yet another \hs{newtype}:
 
 \begin{minted}{haskell}
-newtype GraphMonad a = GM { bind :: forall g. Graph g => (a -> g) -> g }
+newtype GraphMonad a = GM {
+    bind :: forall g. Graph g => (a -> g) -> g }
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
 instance Graph (GraphMonad a) where
     type Vertex (GraphMonad a) = a
-    empty       = GM $ \_ -> empty
-    vertex  x   = GM $ \f -> f x -- here is the difference from gmap
-    overlay x y = GM $ \f -> overlay (bind x f) (bind y f)
-    connect x y = GM $ \f -> connect (bind x f) (bind y f)
+    empty       = GM@\,@$@\,@\_ -> empty
+    vertex  x   = GM@\,@$@\,@\f -> f x
+    overlay x y = GM@\,@$@\,@\f -> overlay (bind x f) (bind y f)
+    connect x y = GM@\,@$@\,@\f -> connect (bind x f) (bind y f)
 \end{minted}
 
-As you can see, the implementation is almost identical to \hs{gmap}: instead of
+The implementation is almost identical to \hs{gmap}: instead of
 wrapping the value \hs{f@\,\,@x} into a \hs{vertex}, we should just leave it as is.
 Let's see how we can make use of this new type in our toolbox.
 
@@ -387,38 +359,36 @@ on the set of vertices that satisfy the predicate by turning all other
 vertices into empty subgraphs and flattening the result.
 
 \begin{minted}{haskell}
-induce :: Graph g => (Vertex g -> Bool) -> GraphMonad (Vertex g) -> g
-induce p g = bind g $ \v -> if p v then vertex v else empty
+induce :: Graph g => (Vertex g -> Bool)
+    -> GraphMonad (Vertex g) -> g
+induce p g = bind g $ \v ->
+    if p v then vertex v else empty
 \end{minted}
 \vspace{1mm}
-\begin{minted}[frame=single]{haskell}
-@\ghci@ edgeList $ clique [0..4]
-[(0,1),(0,2),(0,3),(0,4),(1,2),(1,3),(1,4),(2,3),(2,4),(3,4)]
-
+\begin{minted}[frame=single,fontsize=\small]{haskell}
 @\ghci@ edgeList $ induce (<3) $ clique [0..4]
 [(0,1),(0,2),(1,2)]
 \end{minted}
+% @\ghci@ edgeList $ clique [0..4]
+% [(0,1),(0,2),(0,3),(0,4),(1,2),(1,3),(1,4),(2,3),(2,4),(3,4)]
 
 \noindent
 As you can see, by inducing a clique on a subset of the vertices
 that we like \hs{(<3)}, we get a smaller clique, as expected.
 The cost of \hs{induce} for a given expression $g$ is $O(|g|)$.
 
-Now we can implement the \hs{removeVertex} function, as
-was promised in the motivation section~\S\ref{sec-motivation}.
+Now we can implement the \hs{removeVertex} function:
 
 \begin{minted}{haskell}
-removeVertex :: (Graph g, Eq (Vertex g)) => Vertex g -> GraphMonad (Vertex g) -> g
+removeVertex :: (Graph g, Eq (Vertex g)) => Vertex g
+    -> GraphMonad (Vertex g) -> g
 removeVertex v = induce (/= v)
 \end{minted}
 \vspace{1mm}
-\begin{minted}[frame=single]{haskell}
-@\ghci@ adjacencyList $ removeVertex 2 $ 1 * 2 + 3 * 1
-[(1,[@@]),(3,[1])]
+\begin{minted}[frame=single,fontsize=\small]{haskell}
+@\ghci@ edgeList $ removeVertex 2 $ 1 * 2 + 3 * 1
+[(3,1)]
 \end{minted}
-
-\noindent
-Note that the above example comes from Fig.~\ref{fig-example}.
 
 The polymorphic implementation of \hs{removeVertex} presented above takes
 $O(|g|)$ to remove a vertex from a graph expression $g$, which is
@@ -427,13 +397,15 @@ slower than some concrete data structures.
 We can also use the \hs{bind} function to split a vertex into a list of given vertices:
 
 \begin{minted}{haskell}
-splitVertex :: (Graph@\,\,g@,@\,@Eq@\,@(Vertex@\,\,g@)) => Vertex@\,\,g@ -> [Vertex@\,\,g@] -> GraphMonad@\,@(Vertex@\,\,g@) -> g
-splitVertex v vs g = bind g $ \u -> if u == v then vertices vs else vertex u
+splitVertex :: (Graph@\,\,g@,@\,@Eq@\,@(Vertex@\,\,g@)) => Vertex@\,\,g@
+    -> [Vertex@\,\,g@] -> GraphMonad@\,@(Vertex@\,\,g@) -> g
+splitVertex v vs g = bind g $ \u ->
+    if u == v then vertices vs else vertex u
 \end{minted}
 \vspace{1mm}
-\begin{minted}[frame=single]{haskell}
-@\ghci@ adjacencyList $ splitVertex 1 [0, 1] $ 1 * (2 + 3)
-[(0,[2,3]),(1,[2,3]),(2,[@@]),(3,[@@])]
+\begin{minted}[frame=single,fontsize=\small]{haskell}
+@\ghci@ edgeList $ splitVertex 1 [0, 1] $ 1 * (2 + 3)
+[(0,2),(0,3),(1,2),(1,3)]
 \end{minted}
 
 \noindent
@@ -450,6 +422,7 @@ Below we derive an implementation for \hs{removeEdge}, which is another
 example of a useful function that is not a homomorphism. Removing an edge sounds
 easy, but the result is the most complicated \hs{newtype} in this paper.
 
+\begin{figure*}
 \begin{minted}{haskell}
 newtype RemoveEdge a = RE { re :: forall g. (Vertex g @\teq@ a, Graph g) => a -> a -> g }
 \end{minted}
@@ -468,6 +441,8 @@ instance Eq a => Graph (RemoveEdge a) where
 removeEdge :: (Eq@\,@(Vertex g),@\,@Graph g) => Vertex g -> Vertex g -> RemoveEdge@\,@(Vertex g) -> g
 removeEdge u v g = re g u v
 \end{minted}
+\caption{Removing an edge from a polymorphic graph}
+\end{figure*}
 
 \noindent
 Here is how it works. Removing an edge $(u,v)$ from the \hs{empty} graph
@@ -479,20 +454,19 @@ $x_u \rightarrow y_{uv}$ and $x_{uv} \rightarrow y_v$, where:
 
 \begin{itemize}
     \item $x_u = \hs{removeVertex}~u~x$ and $y_{uv} = \hs{removeEdge}~u~v~y$,
-    therefore $x_u \rightarrow y_{uv}$ definitely does not contain the edge $(u,v)$
+    thus $x_u \rightarrow y_{uv}$ definitely does not contain the edge $(u,v)$
     at the cost of losing the vertex $u$ in the left-hand side $x_u$.
     \item $y_v = \hs{removeVertex}~v~y$ and $x_{uv} = \hs{removeEdge}~u~v~x$,
-    therefore $x_{uv} \rightarrow y_v$ definitely does not contain the edge $(u,v)$
+    thus $x_{uv} \rightarrow y_v$ definitely does not contain the edge $(u,v)$
     at the cost of losing the vertex $v$ in the right-hand side $y_v$.
 \end{itemize}
 \noindent
 The overlay $x_u \rightarrow y_{uv} + x_{uv} \rightarrow y_v$ contains the
 vertices $u$ and $v$, because at least one copy of each vertex has been preserved,
-but the edge $(u,v)$ is removed in both subexpressions and is therefore removed as
-intended.
+but the edge $(u,v)$ is removed in both subexpressions as intended.
 
 We demonstrate \hs{removeEdge} on two simple examples:
-\begin{minted}[frame=single]{haskell}
+\begin{minted}[frame=single,fontsize=\small]{haskell}
 @\ghci@ edgeList $ path "Hello"
 [('H','e'),('e','l'),('l','l'),('l','o')]
 
@@ -508,28 +482,29 @@ The \hs{removeEdge} function is expensive: given an expression of size $|g|$
 it may produce a transformed expression of the quadratic size $O(|g|^2)$. Many
 concrete \hs{Graph} instances provide much faster equivalents of \hs{removeEdge}.
 
-\begin{figure}
+\begin{figure*}
 \centerline{\includegraphics[scale=0.3]{fig/De-Bruijn-construction.pdf}}
 \vspace{-4mm}
 \caption{Constructing De Bruijn graphs using the graph monad\label{fig-de-bruijn}}
 \vspace{-4mm}
-\end{figure}
+\end{figure*}
 
 
 \subsection{De Bruijn graphs}
 
-To convince the reader that one can easily construct sophisticated graphs using
-the presented library, let's try it on \emph{De Bruijn graphs}, an interesting
+To demonstrate that one can easily construct sophisticated graphs using
+the presented library, let us try it on \emph{De Bruijn graphs}, an interesting
 combinatorial object that frequently shows up in computer engineering and
 bioinformatics. The implementation is very short, but requires some explanation:
 
 \begin{minted}{haskell}
-deBruijn :: (Graph g, Vertex g @\teq@ [a]) => Int -> [a] -> g
+deBruijn :: (Graph g,@\,@Vertex g @\teq@ [a])@\,@=>@\,@Int -> [a] -> g
 deBruijn len alphabet = bind skeleton expand
   where
     overlaps = @\std{mapM}@ (@\std{const}@ alphabet) [2..len]
-    skeleton = edges    [        (Left s, Right s)   | s <- overlaps ]
-    expand v = vertices [ @\std{either}@ ([a] ++) (++ [a]) v | a <- alphabet ]
+    skeleton = edges [@\,@(Left s,@\,@Right s) | s@\,@<-@\,\blk{overlaps}\,@]
+    expand v = vertices [ @\std{either}@ ([a]++) (++[a]) v
+                        | a <- alphabet ]
 \end{minted}
 
 The function builds a De Bruijn graph of dimension \hs{len} from symbols of the given
@@ -553,16 +528,18 @@ of the solution:
 \end{itemize}
 
 Below we construct the De Bruijn graph shown in Fig.~\ref{fig-de-bruijn}.
-\begin{minted}[frame=single]{haskell}
+\begin{minted}[frame=single,fontsize=\small]{haskell}
 @\ghci@ edgeList $ deBruijn 3 "01"
-[("000","000"),("000","001"),("001","010"),("001","011"),("010","100"),("010","101")
-,("011","110"),("011","111"),("100","000"),("100","001"),("101","010"),("101","011")
+[("000","000"),("000","001"),("001","010"),("001","011")
+,("010","100"),("010","101"),("011","110"),("011","111")
+,("100","000"),("100","001"),("101","010"),("101","011")
 ,("110","100"),("110","101"),("111","110"),("111","111")]
 
-@\ghci@ all (\(x,y) -> drop 1 x == dropEnd 1 y) $ edgeList $ deBruijn 9 "abc"
+@\ghci@ g = deBruijn 9 "abc"
+@\ghci@ all (\(x,y) -> drop 1 x == dropEnd 1 y) $ edgeList g
 True
 
-@\ghci@ Set.size $ domain $ deBruijn 9 "abc"
+@\ghci@ Set.size $ domain g
 19683 -- i.e. 3^9
 \end{minted}
 
@@ -579,27 +556,27 @@ polymorphically, before eventually interpreting them using one of the \hs{Graph}
 instances defined in~\S\ref{sec-a-la-carte}. See the library API in
 Fig.~\ref{fig-api}.
 
-The implementation is written in the vanilla functional programming style
-and, for the most part, should be easy to follow and build on by others.
-The library can handle graphs
-comprising millions of vertices and billions of edges in the matter of
-seconds, which is not earth-shattering but is sufficiently fast for many applications.
-The most efficient \hs{Graph} instance that we developed is \hs{IntAdjacencyMap}.
-It is defined as in Fig.~\ref{fig-adjacency-map} but uses specialised
-\hs{IntMap} and \hs{IntSet} data structures and therefore
-only supports graphs with \hs{Int} vertices. We benchmarked \hs{IntAdjacencyMap}
-on the following three examples:
+% The implementation is written in the vanilla functional programming style
+% and, for the most part, should be easy to follow and build on by others.
+% The library can handle graphs
+% comprising millions of vertices and billions of edges in the matter of
+% seconds, which is not earth-shattering but is sufficiently fast for many applications.
+% The most efficient \hs{Graph} instance that we developed is \hs{IntAdjacencyMap}.
+% It is defined as in Fig.~\ref{fig-adjacency-map} but uses specialised
+% \hs{IntMap} and \hs{IntSet} data structures and therefore
+% only supports graphs with \hs{Int} vertices. We benchmarked \hs{IntAdjacencyMap}
+% on the following three examples:
 
-\begin{itemize}
-    \item A De Bruijn graph \hs{deBruijn 1000000 "0123456789"} with
-    $|V|=10^6$ and $|E|=10^7$ takes 3.77s.
+% \begin{itemize}
+%     \item A De Bruijn graph \hs{deBruijn 1000000 "0123456789"} with
+%     $|V|=10^6$ and $|E|=10^7$ takes 3.77s.
 
-    \item A 2D mesh \hs{box@\,@(}\hs{path [1..1000])@\,@(}\hs{path [1..1000])}
-    with $|V|=10^6$ and $|E| \approx 2\cdot 10^6$ takes 4.24s.
+%     \item A 2D mesh \hs{box@\,@(}\hs{path [1..1000])@\,@(}\hs{path [1..1000])}
+%     with $|V|=10^6$ and $|E| \approx 2\cdot 10^6$ takes 4.24s.
 
-    \item A clique \hs{clique [1..44722]} with $|V|=44722$ and $|E| \approx 10^9$
-    takes 10.2s.
-\end{itemize}
+%     \item A clique \hs{clique [1..44722]} with $|V|=44722$ and $|E| \approx 10^9$
+%     takes 10.2s.
+% \end{itemize}
 
-The parametric \hs{AdjacencyMap} instance is approximately 2 times slower
-on the above examples.
+% The parametric \hs{AdjacencyMap} instance is approximately 2 times slower
+% on the above examples.
