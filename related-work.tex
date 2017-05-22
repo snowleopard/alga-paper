@@ -11,7 +11,7 @@ algorithm developed by~\citet{1995_king_graphs} used arrays to represent graphs
 and \emph{state-transformer monads}~\cite{1994_launchbury_st} to mimic imperative array
 updates in pure functional programming. The developed algorithms are still in
 use today and are available from the \textsf{containers} library shipped with the GHC.
-As demonstrated in the motivation section~\S\ref{sec-motivation}, the API of
+As demonstrated in the introduction section~\S\ref{sec-intro}, the API of
 the library is difficult to use and contains partial functions.
 
 A fundamentally different approach by~\citet{2001_erwig_inductive} is based
@@ -24,7 +24,7 @@ the \textsf{fgl} library that contains implementations of many standard graph
 algorithms, from depth-first search to maximum flow on weighted graphs. Compared
 to algebraic graphs proposed in this paper, the \textsf{fgl} library has a larger
 core of graph construction primitives (10 vs 4), some of which are partial, as
-has been shown in the motivational example in \S\ref{sec-motivation}.
+has been shown in~\S\ref{sec-intro}.
 
 Several other authors investigated ways to define graphs compositionally,
 e.g.~\citet{1995_gibbons_algebra} proposed an algebraic framework for modelling

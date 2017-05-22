@@ -33,8 +33,8 @@
 In this section we define the \emph{core} of algebraic graphs comprising
 four graph construction primitives. We describe the semantics of the primitives
 using the common representation of graphs by sets of vertices and edges, and
-then abstract from this representation by focusing on the laws that these
-primitives satisfy (see~\S\ref{sec-algebra}).
+then abstract away from this representation by focusing on the laws that these
+primitives satisfy.
 
 Let $G$ be the set of all directed graphs whose vertices come from a fixed
 universe $\mathbb{V}$. As an example, we can think of graphs whose vertices are
@@ -46,7 +46,7 @@ the pair $(V, E)$ is inconsistent and does not correspond to a graph.
 When one needs to guarantee the internal consistency of a data structure, such
 as the pair $(V, E)$, the standard solution is to define an abstract interface
 that encapsulates the data structure and provides a set of safe construction
-primitives. This is exactly the approach we take in this paper.
+primitives. This is exactly the approach we take.
 
 \subsection{Constructing graphs}\label{sub-constructing}
 
@@ -78,8 +78,8 @@ sets of vertices. We make no such assumptions, hence our definitions are total:
 any graphs can be composed using overlay and connect.
 }.
 Note that the connect operation is the only source of edges when constructing
-graphs. As we will see in~\S\ref{sec-algebra}, the overlay and connect operations
-are very similar to addition and multiplication, therefore connect has a higher
+graphs. As we will see in~\S\ref{sec-algebra}, overlay and connect
+are very similar to addition and multiplication. We therefore give connect a higher
 precedence, i.e. $1 + 2 \rightarrow 3$ is interpreted as $1 + (2 \rightarrow 3)$.
 
 Fig.~\ref{fig-construction} illustrates a few examples of constructing graphs
@@ -95,8 +95,9 @@ using the defined primitives:
   and two edges $(1, 2)$ and $(2, 3)$.
 \end{itemize}
 
+\noindent
 It is important to note that the core can be used to construct any graph by
-overlaying its vertices and connected pairs of vertices.
+overlaying its vertices and pairs of connected vertices.
 
 \subsection{Type class}\label{sub-class}
 
@@ -124,7 +125,7 @@ are total, i.e. are defined for all possible inputs, therefore,
 the presented API allows \emph{fewer opportunities for usage errors}
 and \emph{greater opportunities for reuse}.
 
-Let's put the API to the test and construct some graphs. A single edge is
+Let us put the interface to the test and construct some graphs. A single edge is
 obtained by connecting two vertices:
 
 \begin{minted}{haskell}
@@ -156,11 +157,12 @@ clique = @\std{foldr}@ connect empty . @\std{map}@ vertex
 \end{minted}
 
 \noindent
-For example, \hs{clique@\,@[1,2,3]} is graph $1 \rightarrow 2 \rightarrow 3$, i.e.
+For example, \hs{clique@\,@[1,2,3]} expands to
+$1 \rightarrow 2 \rightarrow 3 \rightarrow \varepsilon$, i.e.
 the graph with three vertices $\{1, 2, 3\}$ and three edges $(1, 2)$, $(1, 3)$ and
 $(2, 3)$. Note that it is different from the graph in Fig.~\ref{fig-construction}(e).
 
-The above graph construction functions are total, fully polymorphic, and elegant.
+The graph construction functions defined above are total, fully polymorphic, and elegant.
 Thanks to the minimalistic core type class, it is easy to wrap your favourite
-graph library into the described interface, and reuse these functions, as well
-as many others that we define throughout this paper.
+graph library into the described interface, and reuse the above functions, as
+well as many others that we define throughout this paper.

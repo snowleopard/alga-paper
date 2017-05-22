@@ -55,7 +55,7 @@ respectively. Furthermore, we can verify the following:
 
 \noindent
 The above looks remarkably close to a semiring, with the only oddity being the shared
-identity of the two operations. The lack of annihilating zero element and
+identity of the two operations. The lack of annihilating zero element and the
 following \emph{decomposition} law is what makes the algebra of graphs different:
 \[
 x \rightarrow y \rightarrow z = x \rightarrow y + x \rightarrow z + y \rightarrow z.
@@ -113,19 +113,19 @@ graph :: Graph g@\,@=>@\,@[Vertex g]@\,@->@\,@[(Vertex g,@\,@Vertex g)]@\,@->@\,
 graph vs es = overlay (vertices vs) (edges es)
 \end{minted}
 
-Here \hs{edges} is a generalisation of \hs{edge} to a list of edges, so that
-\hs{edge x y} $\ =\ $ \hs{edges [(x,y)]}:
+Here \hs{edges} is a generalisation of the function \hs{edge} to a list of edges,
+so that \hs{edge x y} $\ =\ $ \hs{edges [(x,y)]}:
 
 \begin{minted}{haskell}
 edges :: Graph g => [(Vertex g, Vertex g)] -> g
 edges = @\std{foldr}@ overlay empty . @\std{map}@ (@\std{uncurry}@ edge)
 \end{minted}
 
-Note that \hs{graph} is total thanks to the \emph{absorption theorem}
-$x \rightarrow y = x \rightarrow y + x + y$, which in particular states that
-an edge $(u,v)$ contains its two vertices $\{u,v\}$ and is inseparable
-from them. Therefore, if the pair $(V,E)$ is inconsistent, the set of vertices of
-the resulting graph will be expanded to $\hat{V}$ so that
+The \emph{absorption theorem} $x \rightarrow y + x + y = x \rightarrow y$, which
+follows from decomposition of $x \rightarrow y \rightarrow \varepsilon$, states
+that an edge $(u,v)$ contains its two vertices $\{u,v\}$ and is inseparable from
+them. Therefore, if the pair $(V,E)$ is inconsistent, the set of vertices of
+\hs{graph@$\,V\,E$@} will be expanded to $\hat{V}$ so that
 $E\subseteq \hat{V}\times \hat{V}$ holds. More generally, the absorption
 theorem states that in addition to being complete, the algebraic graph
 API is also \emph{sound} in the sense that it is impossible to construct
@@ -140,8 +140,8 @@ The following theorems can be proved from the axioms:
     \item Saturation: $x \rightarrow x \rightarrow x = x \rightarrow x$.
 \end{itemize}
 
-\citet{2014_alekseyev_phd} formalised the algebra of parameterised graphs
-(that we build on) in Agda and proved of these theorems.
+These theorems were proved in Agda by~\citet{2014_alekseyev_phd} who formalised
+the algebra of parameterised graphs that we build on.
 
 \begin{figure*}
 \[
@@ -162,7 +162,7 @@ The following theorems can be proved from the axioms:
 \subsection{Partial order on graphs}\label{sub-partial-order}
 
 It is fairly standard to define $x \preceq y$ as $x + y = y$ for an
-idempotent $+$ operation, since it gives a partial order on the elements
+idempotent operation~$+$, since it gives a partial order on the elements
 of the algebra. Indeed, all partial order laws are satisfied:
 
 \begin{itemize}
@@ -198,8 +198,8 @@ The following theorems about the partial order on graphs can be proved:
     \item Least element: $\varepsilon \subseteq x$.
     \item Overlay order: $x \subseteq x + y$.
     \item Overlay-connect order: $x + y \subseteq x \rightarrow y$.
-    \item Monotony: $x \subseteq y \Rightarrow (x + z \subseteq y + z)
-    \wedge (x \rightarrow z \subseteq y \rightarrow z)
+    \item Monotony: $x \subseteq y \Rightarrow \\
+    (x + z \subseteq y + z) \wedge(x \rightarrow z \subseteq y \rightarrow z)
     \wedge (z \rightarrow x \subseteq z \rightarrow y)$.
 
 \end{itemize}
@@ -208,8 +208,8 @@ The following theorems about the partial order on graphs can be proved:
 
 In this subsection we show how to use equational reasoning and the laws
 of the algebra to prove properties of functions on graphs.
-For example, let's prove that \hs{vertex x} $=$ \hs{vertices [x]} by rewriting
-the right-hand side:
+For example, to prove that \hs{vertex x} $=$ \hs{vertices [x]} we rewrite
+the right-hand side using the function definitions and $x + \varepsilon = x$:
 \[
 \begin{array}{rcl}
 \hs{vertices [x]} & = & \hs{@\std{foldr}@ overlay empty (@\std{map}@ vertex [x])}\\

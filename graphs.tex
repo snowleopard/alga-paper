@@ -6,27 +6,27 @@ show that the algebra presented in the previous section~\S\ref{sec-algebra} is
 not restricted only
 to directed graphs, but can be extended to axiomatically represent
 undirected~(\S\ref{sub-undirected}), reflexive~(\S\ref{sub-reflexive})
-and transitive~(\S\ref{sub-transitive}) graphs, their various combinations,
-and even hypergraphs~(\S\ref{sub-hypergraphs}).
+and transitive~(\S\ref{sub-transitive}) graphs, their various
+combinations~(\S\ref{sub-preorder}), and even hypergraphs~(\S\ref{sub-hypergraphs}).
 
 \begin{figure*}
 \begin{minted}{haskell}
-import           Data.Set (Set, @\blk{singleton, union, elems, fromAscList}@)
-import qualified Data.Set as Set (empty)
+            import           Data.Set (Set, @\blk{singleton, union, elems, fromAscList}@)
+            import qualified Data.Set as Set (empty)
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
-data Relation a = R { domain :: Set a, relation :: Set (a, a) } deriving (Eq, Show)
+            data Relation a = R { domain :: Set a, relation :: Set (a, a) } deriving (Eq, Show)
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
-instance Ord a => Graph (Relation a) where
-    type Vertex (Relation a) = a
-    empty       = R Set.empty Set.empty
-    vertex  x   = R (singleton x) Set.empty
-    overlay x y = R (domain x `union` domain y) (relation x `union` relation y)
-    connect x y = R (domain x `union` domain y) (relation x `union` relation y `union`
-        fromAscList [ (a, b) | a <- elems (domain x), b <- elems (domain y) ])
+            instance Ord a => Graph (Relation a) where
+                type Vertex (Relation a) = a
+                empty       = R Set.empty Set.empty
+                vertex  x   = R (singleton x) Set.empty
+                overlay x y = R (domain x `union` domain y) (relation x `union` relation y)
+                connect x y = R (domain x `union` domain y) (relation x `union` relation y `union`
+                    fromAscList [ (a, b) | a <- elems (domain x), b <- elems (domain y) ])
 \end{minted}
 \vspace{-2mm}
 \caption{Implementing the \hs{Graph} type class by a binary relation
@@ -58,9 +58,9 @@ The existence of the canonical form was proved by~\citet{2014_algebra_mokhov}
 for an extended version of the algebra. The proof fundamentally builds on the
 decomposition axiom: one can apply it repeatedly to an expression, breaking up
 connect sequences $x\rightarrow y\rightarrow z$ into pairs $x \rightarrow y$
-until the decomposition can no longer be applied. We can then open the parentheses
-using the distributivity and rearrange terms into the canonical expression
-by the commutativity and idempotence of the overlay $+$ operation.
+until the decomposition can no longer be applied. We can then open parentheses,
+such as $x\rightarrow (y + z)$, using the distributivity axiom and rearrange
+terms into the canonical form by the commutativity and idempotence of overlay~$+$.
 
 It is convenient to make \hs{Relation} an instance of the \hs{Num} type class
 to use the standard $+$ and $*$ operators as shortcuts for \hs{overlay} and
@@ -81,7 +81,7 @@ Note that the \hs{Num} law \hs{@\blk{abs}@ x * signum x == x} is satisfied by th
 definition since $x \rightarrow \varepsilon = x$. Any \hs{Graph} instance
 can be made a \hs{Num} instance if need be, using a definition similar to the above.
 
-We can now play with graphs and binary relations using the interactive GHC:
+We can now experiment with graphs and binary relations using the interactive GHC:
 
 \begin{minted}[frame=single,fontsize=\small]{haskell}
 @\ghci@ 1 * (2 + 3) :: Relation Int
@@ -104,8 +104,8 @@ of any type \hs{@\blk{a}@} that satisfies the~\hs{Ord@\,\,\blk{a}@} constraint.
 
 \subsection{Deep embedding}\label{sub-embedding}
 
-We can embed the core graph construction primitives into an algebraic data type
-(excuse the name clash with the type class):
+We can embed the core graph construction primitives into a simple data type
+(excuse and ignore the name clash with the type class):
 
 \begin{minted}{haskell}
 data Graph a = Empty
@@ -131,16 +131,16 @@ fold (Connect x y) = connect (fold x) (fold y)
 We cannot use the derived \hs{Eq} instance of the \hs{Graph} data type, because it
 would clearly violate the axioms of the algebra, e.g. \hs{Overlay@\,\,@Empty@\,\,@Empty} is
 structurally different from \hs{Empty}, but they must be equal according to the axioms.
-However, we can implement a custom law-abiding \hs{Eq}
-instance by \emph{reinterpreting} the graph expression
-as a \hs{Relation}, thereby gaining access to the canonical graph representation:
+One way to implement a custom law-abiding \hs{Eq} instance is to \emph{reinterpret}
+the graph expression as a binary relation, thereby gaining access to the canonical
+graph representation:
 
 \begin{minted}{haskell}
 instance Ord a => Eq (Graph a) where
     x == y = fold x == (fold y :: Relation a)
 \end{minted}
 
-An interesting feature of this instance is that it allows to represent
+An interesting feature of this graph instance is that it allows to represent
 densely connected graphs more compactly. For example, \hs{clique [1..n] :: Graph Int}
 has a linear-size representation in memory, while \hs{clique [1..n] :: Relation Int}
 stores each edge separately and therefore requires $O(n^2)$ memory. Exploiting the
@@ -310,7 +310,7 @@ comprises only 6 axioms:
 
 Commutativity of the connect operator forces graph expressions that differ only
 in the direction of edges into the same equivalence class. One can implement
-this by the \emph{symmetric closure} of the underlying relation:
+this by the \emph{symmetric closure} of the underlying binary relation:
 
 \begin{minted}{haskell}
 newtype Symmetric a = S@\,@(Relation a)@\,@deriving@\,@(Graph,@\,@Num)
@@ -355,10 +355,11 @@ constraint for functions that rely on the commutativity of the \hs{connect} meth
 
 \subsection{Reflexive graphs}\label{sub-reflexive}
 
-A graph is \emph{reflexive} if every vertex is connected to itself, i.e. has a self-loop.
-An example of a reflexive graph is the graph corresponding to the partial
-order relation $\subseteq$ on graphs: indeed, $x \subseteq x$ holds for all $x$. To
-represent reflexive graphs algebraically we can introduce the following axiom:
+A graph is \emph{reflexive} if every vertex of the graph is connected to itself,
+i.e. has a self-loop. An example of a reflexive graph is the graph corresponding
+to the partial order relation $\subseteq$ on graphs: indeed, $x \subseteq x$ holds
+for all $x$. To represent reflexive graphs algebraically we can introduce the
+following axiom:
 
 \begin{itemize}
     \item Self-loop: $v = v \rightarrow v$, where $v\in \mathbb{V}$ is a vertex.
@@ -371,14 +372,14 @@ The self-loop axiom corresponds to the additional \hs{Graph} law:
     \item \hs{vertex x} = \hs{connect (}\hs{vertex x) (}\hs{vertex x)}.
 \end{itemize}
 
-One can implement the reflexive and irreflexive \hs{Graph} instances analogously to
-the \hs{Symmetric} implementation presented in~\S\ref{sub-undirected}, by wrapping the
-\hs{Relation} into a \hs{newtype} and giving it a custom \hs{Eq} instance based on the
-\hs{reflexiveClosure}.
+One can implement the reflexive \hs{Graph} instance analogously to the
+implementation of the \hs{Symmetric} data type presented in~\S\ref{sub-undirected},
+by wrapping the \hs{Relation} into a \hs{newtype} and giving it a custom \hs{Eq}
+instance based on the \hs{reflexiveClosure}.
 
 We can define
 \hs{class Graph@\,\,\blk{g}@ => ReflexiveGraph@\,\,\blk{g}@}
-to increase the type safety of functions that rely on the additional axiom.
+to increase the type safety of functions that rely on the self-loop axiom.
 
 \subsection{Transitive graphs}\label{sub-transitive}
 
@@ -400,15 +401,15 @@ existence of some transitive edges are forced into the same equivalence class. N
 precondition $y \neq \varepsilon$ is necessary as otherwise $+$ and $\rightarrow$ can no
 longer be distinguished, which is clearly undesirable:
 \[
-x \rightarrow z = x \rightarrow \varepsilon \rightarrow z = x \rightarrow \varepsilon
- + \varepsilon \rightarrow z + x \rightarrow z = x \rightarrow \varepsilon
- + \varepsilon \rightarrow z = x + z.
+x\!\rightarrow\!z = x\!\rightarrow\!\varepsilon\!\rightarrow z = x\!\rightarrow\!\varepsilon
+ + \varepsilon\!\rightarrow\!z + x\!\rightarrow\!z = x\!\rightarrow\!\varepsilon
+ + \varepsilon\!\rightarrow\!z = x + z.
 \]
 
 It is interesting to note that $+$ and $\rightarrow$ have simple meanings for transitive
 graphs: they correspond to the \emph{parallel} and \emph{sequential composition},
 respectively. This allows to algebraically describe concurrent systems, which was
-the original motivation behind the research on algebraic graphs.
+the original motivation behind the research on algebraic graphs~\cite{2014_algebra_mokhov}.
 
 We can implement transitive graphs by wrapping
 \hs{Relation} in a \hs{newtype Transitive} with a custom equality test that
@@ -416,7 +417,7 @@ compares the transitive closures of the underlying relations.
 A subclass \hs{class Graph@\,\,\blk{g}@ => TransitiveGraph@\,\,\blk{g}@} can be
 defined to distinguish algebraic graphs with the closure axiom from others.
 
-\subsection{Preorders and equivalence relations}
+\subsection{Preorders and equivalence relations}\label{sub-preorder}
 
 By combining reflexive and transitive graphs, one can obtain \emph{preorders}.
 For example, $(1 + 2 + 3) \rightarrow (2 + 3 + 4)$
@@ -425,8 +426,10 @@ finding all strongly-connected components in the graph (e.g. by utilising the
 function \hs{scc} from the \textsf{containers} library) we can derive the
 following \emph{graph condensation}:
 $\{1\} \rightarrow \{2, 3\} \rightarrow \{4\}$. One way to interpret this preorder as a
-dependency graph is that tasks 2 and 3 are executed as a step,
-simultaneously, and that they both depend on task 1, and are prerequisite for task 4.
+dependency graph is that tasks 2 and 3 are executed as a step, simultaneously,
+and that they both depend on task 1, and are prerequisite for task 4. Note that
+having sets as the type of graph vertices is perfectly legal: the type of the
+above graph condensation is \hs{(Graph g, Vertex g @\teq@ Set Int) => g}.
 
 One can further combine preorders and undirected graphs, obtaining \emph{equivalence
 relations}, which can be equipped with an efficient instance based on the
@@ -437,20 +440,20 @@ circuits~\cite{2015_mokhov_algebra}.
 \subsection{Hypergraphs}\label{sub-hypergraphs}
 
 As described in~\S\ref{sub-relation}, the decomposition axiom collapses an algebraic
-graph expression into a collection of vertices and pairs of vertices, i.e. graphs. By replacing
-the decomposition axiom with \emph{3-decomposition}, we obtain \emph{hypergraphs} comprising
-vertices, edges and \emph{3-edges} (triples of vertices):
+graph expression into a collection of vertices and pairs of vertices (i.e. graphs).
+By replacing the decomposition axiom with \emph{3-decomposition}, we obtain
+\emph{hypergraphs} comprising vertices, edges and \emph{3-edges} (triples of vertices):
 
 \begin{itemize}
-    \item 3-decomposition: $w \rightarrow x \rightarrow y \rightarrow z =
+    \item 3-decomposition: $w \rightarrow x \rightarrow y \rightarrow z = \\
     w \rightarrow x \rightarrow y + w \rightarrow x \rightarrow z +
     w \rightarrow y \rightarrow z + x \rightarrow y \rightarrow z$.
 \end{itemize}
 
 Fig.~\ref{fig-3-decomposition} illustrates the axiom by decomposing a tetrahedron
-into four 3-edges corresponding to its faces. To better understand the difference
-between the (2-)decomposition and 3-decomposition
-axioms, let's substitute~$\varepsilon$ for $w$ in the 3-decomposition and simplify:
+into four 3-edges corresponding to its \emph{faces}. To better understand the
+difference between the (2-)decomposition and 3-decomposition
+axioms, let us substitute~$\varepsilon$ for $w$ in the 3-decomposition and simplify:
 \[
 x \rightarrow y \rightarrow z = x \rightarrow y + x \rightarrow z + y \rightarrow z
 + x \rightarrow y \rightarrow z.

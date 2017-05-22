@@ -31,30 +31,32 @@ fold   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Graph  (Vertex g)      -> g
 ~\\
 \begin{subfigure}[b]{\linewidth}
 \begin{minted}[fontsize=\small]{haskell}
-transpose     :: Transpose g -> g
-toList        :: ToList a -> [a]
-gmap          :: Graph g => (a -> Vertex g) -> GraphFunctor a -> g
-mergeVertices :: Graph g => (Vertex g -> Bool) -> Vertex g -> GraphFunctor (Vertex g) -> g
-bind          :: Graph g => GraphMonad a -> (a -> g) -> g
-induce        :: Graph g => (Vertex g -> Bool) -> GraphMonad (Vertex g) -> g
-removeVertex  :: (Graph g, Eq (Vertex g)) => Vertex g -> GraphMonad (Vertex g) -> g
-splitVertex   :: (Graph g, Eq (Vertex g)) => Vertex g -> [Vertex g] -> GraphMonad (Vertex g) -> g
-removeEdge    :: (Graph g, Eq (Vertex g)) => Vertex g -> Vertex g -> RemoveEdge (Vertex g) -> g
-box           :: (Graph g, Vertex g @\teq@ (u, v)) => GraphFunctor u -> GraphFunctor v -> g
-deBruijn      :: (Graph g, Vertex g @\teq@ [a]) => Int -> [a] -> g
+                transpose     :: Transpose g -> g
+                toList        :: ToList a -> [a]
+                gmap          :: Graph g => (a -> Vertex g) -> GraphFunctor a -> g
+                mergeVertices :: Graph g => (Vertex g -> Bool) -> Vertex g -> GraphFunctor (Vertex g) -> g
+                bind          :: Graph g => GraphMonad a -> (a -> g) -> g
+                induce        :: Graph g => (Vertex g -> Bool) -> GraphMonad (Vertex g) -> g
+                removeVertex  :: (Graph g, Eq (Vertex g)) => Vertex g -> GraphMonad (Vertex g) -> g
+                splitVertex   :: (Graph g, Eq (Vertex g)) => Vertex g -> [Vertex g] -> GraphMonad (Vertex g) -> g
+                removeEdge    :: (Graph g, Eq (Vertex g)) => Vertex g -> Vertex g -> RemoveEdge (Vertex g) -> g
+                box           :: (Graph g, Vertex g @\teq@ (u, v)) => GraphFunctor u -> GraphFunctor v -> g
+                deBruijn      :: (Graph g, Vertex g @\teq@ [a]) => Int -> [a] -> g
 \end{minted}
-\caption{Polymorphic graph transformations}
+\caption{Polymorphic graph construction and transformation}
 \end{subfigure}
-\vspace{-3mm}
+\vspace{-4mm}
 \caption{API of the graph transformation library\label{fig-api}}
 \end{figure*}
 
 \section{Graph transformation library}\label{sec-transformations}
 
-In this section we demonstrate the flexibility of the algebraic graph core,
-and develop a graph transformation library whose API is summarised in
-Fig.~\ref{fig-api}. The part of the API shown in Fig.~\ref{fig-api}(a)
-was defined in~\S\ref{sec-algebra}.
+As shown in the previous section~\S\ref{sec-a-la-carte}, the world of \hs{Graph}
+instances has many inhabitants sharing a part of their `algebraic DNA'. They all
+can benefit from a library of polymorphic graph construction and transformation,
+which we develop in this section. The API of the library is summarised in
+Fig.~\ref{fig-api}. The part shown in Fig.~\ref{fig-api}(a) has been defined
+in~\S\ref{sec-algebra}.
 
 \subsection{Standard families of graphs}\label{sub-families}
 
@@ -97,14 +99,14 @@ pair of mutually recursive functions:
 
 \begin{minted}{haskell}
 tree :: Graph g => Tree (Vertex g) -> g
-tree (Node r f) = star@\,\blk{r}\,@(@\std{map}\,\blk{rootLabel}\,\blk{f}@)@\,@`overlay`@\,\blk{forest}\,@f
+tree (Node r f) = star@\,\blk{r}\,@(@\std{map}\,\blk{rootLabel}\,\blk{f}@)@\,@`overlay`@\,\blk{forest}\,f@
 
 forest :: Graph g => Forest (Vertex g) -> g
 forest = @\std{foldr}@ overlay empty . @\std{map}@ tree
 \end{minted}
 
 \noindent
-That is, a tree is represented by a star overlaid with the forest
+That is, a tree is represented by the root star overlaid with the forest
 of subtrees of the root's descendants. We remind the reader the
 definitions of the data types \hs{Tree} and \hs{Forest} from the
 \textsf{containers} library for completeness:
@@ -170,13 +172,13 @@ instance Graph g => Graph (Transpose g) where
     type Vertex (Transpose g) = Vertex g
     empty       = T empty
     vertex      = T . vertex
-    overlay x y = T $ overlay (transpose x) (transpose y)
-    connect x y = T $ connect (transpose y) (transpose x)
+    overlay x y = T $ overlay@\,@(transpose x)@\,@(transpose y)
+    connect x y = T $ connect@\,@(transpose y)@\,@(transpose x)
 \end{minted}
 
 \noindent
 That is, we wrap a graph in a \hs{newtype} flipping the order of \hs{connect} arguments.
-Let's check if this works:
+Let us check if this works:
 
 \begin{minted}[frame=single,fontsize=\small]{haskell}
 @\ghci@ edgeList $ 1 * (2 + 3) * 4
@@ -207,8 +209,8 @@ fewer instances.}:
 
 \vspace{2mm}
 \begin{minted}{haskell}
-newtype GraphFunctor a = GF {
-    gfor :: forall g. Graph g => (a -> Vertex g) -> g }
+newtype GraphFunctor a =
+    GF@\,@{ gfor@\,@::@\,\blk{forall}\,\blk{g}@.@\,@Graph g@\,@=>@\,@(a -> Vertex g)@\,@->@\,\blk{g}@ }
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
@@ -216,8 +218,8 @@ instance Graph (GraphFunctor a) where
     type Vertex (GraphFunctor a) = a
     empty       = GF@\,@$@\,@\_ -> empty
     vertex  x   = GF@\,@$@\,@\f -> vertex (f x)
-    overlay x y = GF@\,@$@\,@\f -> overlay (gmap f x) (gmap f y)
-    connect x y = GF@\,@$@\,@\f -> connect (gmap f x) (gmap f y)
+    overlay x y = GF@\,@$@\,@\f -> overlay@\,@(gmap f x)@\,@(gmap f y)
+    connect x y = GF@\,@$@\,@\f -> connect@\,@(gmap f x)@\,@(gmap f y)
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
@@ -229,7 +231,7 @@ Essentially, we are defining another \hs{newtype} wrapper, which pushes the
 given function all the way towards the vertices of a given graph expression.
 This has no runtime cost,
 just as before, although the actual evaluation of the given function at each
-vertex will not be free, of course. Let's test \hs{gmap}:
+vertex will not be free, of course. Here is \hs{gmap} in action:
 
 \begin{minted}[frame=single,fontsize=\small]{haskell}
 @\ghci@ edgeList $ 1 * 2 * 3 + 4 * 5
@@ -251,8 +253,8 @@ vertices into the same one? They will be merged. Merging graph vertices is
 a useful graph transformation, so let us define it in terms of \hs{gmap}:
 
 \begin{minted}{haskell}
-mergeVertices :: Graph g => (Vertex g -> Bool) -> Vertex g
-                         -> GraphFunctor (Vertex g) -> g
+mergeVertices :: Graph g => (Vertex g -> Bool)
+    -> Vertex g -> GraphFunctor (Vertex g) -> g
 mergeVertices p v = gmap $ \u -> if p u then v else u
 \end{minted}
 \vspace{-1mm}
@@ -265,20 +267,17 @@ The function takes a predicate on graph vertices and a target vertex and
 maps all vertices satisfying the predicate into the target, thereby
 merging them. In our example the \hs{odd} vertices $\{1, 3, 5\}$ are merged
 into~3, in particular creating the self-loop $3 \rightarrow 3$. Note: it takes
-linear time $O(|g|)$ for \hs{mergeVertices} to apply the predicate to each vertex
-(where $|g|$ is the size of the graph expression $g$), which may be much more efficient
-than merging vertices in a concrete data structure. For example, if the graph
-is represented by an adjacency matrix, it will likely be necessary to rebuild
-the resulting matrix from scratch, which takes $O(|V|^2)$ time. Since for
-many graphs we have $|g| = O(|V|)$, our \hs{mergeVertices}
-may be quadratically faster than the matrix-based one.
+linear time $O(|g|)$ for \hs{mergeVertices} to traverse the graph and apply the
+predicate to each vertex (where $|g|$ is the size of the graph expression $g$),
+which may be much more efficient than merging vertices in a concrete data
+structure. For example, if the graph is represented by an adjacency matrix, it
+will likely be necessary to rebuild the resulting matrix from scratch, which
+takes $O(|V|^2)$ time. Since for many graphs we have $|g| = O(|V|)$, our
+\hs{mergeVertices} may be quadratically faster than the matrix-based one.
 
 \begin{figure*}
 \centerline{\includegraphics[scale=0.36]{fig/graph-product.pdf}}
-\vspace{-4mm}
-\caption{The Cartesian graph product of \hs{pentagon} and \hs{p4}, i.e. the graph
-\hs{box@\,\,@}\hs{pentagon@\,\,@}\hs{p4}\label{fig-product}}
-\vspace{-3mm}
+\caption{The Cartesian graph product of \hs{pentagon} and \hs{p4}\label{fig-product}}
 \end{figure*}
 
 As another application of \hs{gmap}, we implement the \emph{Cartesian graph
@@ -304,6 +303,9 @@ original graphs into pairs of vertices by \hs{gmap}. Note that we need to
 by \hs{gmap@\,id@} before passing it to the \hs{toList} function, which expects
 inputs of type \hs{ToList}. As you can see, we managed to implement quite
 a sophisticated graph transformation function \hs{box} fully polymorphically.
+One can use it to construct \emph{mesh} and \emph{torus} graphs as
+\hs{mesh xs ys = box (path xs) (path ys)} and
+\hs{torus xs ys = box (circuit xs) (circuit ys)}, resp.
 
 The \hs{toList} function can be implemented by the following simple \hs{newtype}
 wrapper:
@@ -336,8 +338,8 @@ subgraph and flattening the result. You may recognise this as the \hs{bind} oper
 of a monad. We implement \hs{bind} by wrapping it into yet another \hs{newtype}:
 
 \begin{minted}{haskell}
-newtype GraphMonad a = GM {
-    bind :: forall g. Graph g => (a -> g) -> g }
+newtype GraphMonad a =
+    GM { bind :: forall g. Graph g => (a -> g) -> g }
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
@@ -345,13 +347,13 @@ instance Graph (GraphMonad a) where
     type Vertex (GraphMonad a) = a
     empty       = GM@\,@$@\,@\_ -> empty
     vertex  x   = GM@\,@$@\,@\f -> f x
-    overlay x y = GM@\,@$@\,@\f -> overlay (bind x f) (bind y f)
-    connect x y = GM@\,@$@\,@\f -> connect (bind x f) (bind y f)
+    overlay x y = GM@\,@$@\,@\f -> overlay@\,@(bind x f)@\,@(bind y f)
+    connect x y = GM@\,@$@\,@\f -> connect@\,@(bind x f)@\,@(bind y f)
 \end{minted}
 
 The implementation is almost identical to \hs{gmap}: instead of
 wrapping the value \hs{f@\,\,@x} into a \hs{vertex}, we should just leave it as is.
-Let's see how we can make use of this new type in our toolbox.
+Let us see how we can make use of this new type in our toolbox.
 
 Firstly, we are going to implement a \hs{@\std{filter}@}-like function \hs{induce}
 that, given a vertex predicate and a graph, will compute the \emph{induced subgraph}
@@ -424,22 +426,22 @@ easy, but the result is the most complicated \hs{newtype} in this paper.
 
 \begin{figure*}
 \begin{minted}{haskell}
-newtype RemoveEdge a = RE { re :: forall g. (Vertex g @\teq@ a, Graph g) => a -> a -> g }
+            newtype RemoveEdge a = RE { re :: forall g. (Vertex g @\teq@ a, Graph g) => a -> a -> g }
 \end{minted}
 \vspace{1mm}
 \begin{minted}{haskell}
-instance Eq a => Graph (RemoveEdge a) where
-    type Vertex (RemoveEdge a) = a
-    empty       = RE $ \_ _ -> empty
-    vertex  x   = RE $ \_ _ -> vertex x
-    overlay x y = RE $ \u v -> overlay (re x u v) (re y u v)
-    connect x y = RE $ \u v -> connect (removeVertex u $ re x u u) (re y u v) `overlay`
-                               connect (re x u v) (removeVertex v $ re y v v)
+            instance Eq a => Graph (RemoveEdge a) where
+                type Vertex (RemoveEdge a) = a
+                empty       = RE $ \_ _ -> empty
+                vertex  x   = RE $ \_ _ -> vertex x
+                overlay x y = RE $ \u v -> overlay (re x u v) (re y u v)
+                connect x y = RE $ \u v -> connect (removeVertex u $ re x u u) (re y u v) `overlay`
+                                           connect (re x u v) (removeVertex v $ re y v v)
 \end{minted}
 \vspace{0mm}
 \begin{minted}{haskell}
-removeEdge :: (Eq@\,@(Vertex g),@\,@Graph g) => Vertex g -> Vertex g -> RemoveEdge@\,@(Vertex g) -> g
-removeEdge u v g = re g u v
+            removeEdge :: (Eq@\,@(Vertex g),@\,@Graph g) => Vertex g -> Vertex g -> RemoveEdge@\,@(Vertex g) -> g
+            removeEdge u v g = re g u v
 \end{minted}
 \caption{Removing an edge from a polymorphic graph}
 \end{figure*}

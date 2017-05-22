@@ -15,31 +15,31 @@ For example, the \textsf{containers} library represents graphs by
 \emph{adjacency arrays}~\cite{1995_king_graphs}. To construct a graph
 one specifies the pair $(V,E)$, e.g.
 \hs{buildG (1,3) [(1,2),(2,3)]} constructs the graph with $V=\{1,2,3\}$ and
-$E=\{(1,2), (2,3)\}$. Note that \hs{buildG} is partial:
+$E=\{(1,2), (2,3)\}$. Note that \hs{buildG} is a partial function:
 \hs{buildG (1,2) [(3,1)]} is well-typed but fails with the
 \textsf{`index out of range'} error. Another popular library \textsf{fgl}
 uses the \emph{inductive graph representation} by~\citet{2001_erwig_inductive},
-but its graph construction API is also based on sets of vertices and edges and
+but its graph construction API is based on sets of vertices and edges and also
 has partial functions, e.g. \hs{insEdge} can fail with
 the \textsf{`edge from non-existent vertex'} error. Both \textsf{containers}
 and \textsf{fgl} are treasure troves of graph algorithms, but it is easy to make an
-error when using them. One can wrap these libraries in a safe interface, but the
-question is: What is the right interface for constructing graphs? Is there a better
-foundation than the pair $(V, E)$?
+error when using them. It is possible to wrap these libraries in a safe
+interface, but the question is: What is the right interface for constructing graphs?
+Is there a better foundation than the pair $(V, E)$?
 
-We present \emph{algebraic graphs} --- a new interface
+In this paper we present \emph{algebraic graphs} --- a new interface
 for graph construction and transformation. We abstract away from graph representation
 details and characterise graphs and two operations on them by a set of axioms,
 much like numbers with addition and multiplication are algebraically characterised
-by \emph{rings}~\cite{1999_maclane_algebra}. The presented approach is inspired by the
+by \emph{rings}~\cite{1999_maclane_algebra}. Our approach is based on the
 \emph{algebra of parameterised graphs}, a mathematical formalism used in digital
-circuit design~\cite{2014_algebra_mokhov}, which we distil and adapt to the context
-of functional programming.
+circuit design~\cite{2014_algebra_mokhov}, which we simplify and adapt to the
+context of functional programming.
 
-The two binary operations on algebraic graphs, called \emph{overlay} and \emph{connect},
+The operations on algebraic graphs that we chose, called \emph{overlay} and \emph{connect},
 have two important properties: i) they are closed on the set of graphs, i.e. are total
-functions, and ii) they can be used to construct any graph starting from the \emph{empty} and
-single-\emph{vertex} graphs. This leads us to the safe and minimalistic core of four graph
+functions, and ii) they can be used to construct any graph starting with the \emph{empty} and
+\emph{single-vertex} graphs. This leads us to the safe and minimalistic core of four graph
 construction primitives, as captured by the following data type:
 
 \begin{minted}{haskell}
@@ -50,10 +50,10 @@ data Graph a = Empty
 \end{minted}
 
 \noindent
-To make the core more reusable we also define the following type class\footnote{The
-name collision is not a problem in practice, because the data type and type class
-are not used together and can be defined in separate modules.}, whose
-instances must obey the axioms of the algebra:
+To make the core more reusable we can also define the following type class\footnote{The
+name collision (\hs{data Graph} and \hs{class Graph}) is not a problem in practice,
+because the data type and type class are not used together and live in
+separate modules.}, whose instances must obey the axioms of the algebra:
 
 \begin{minted}{haskell}
 class Graph g where
@@ -65,10 +65,10 @@ class Graph g where
 \end{minted}
 
 \noindent
-The main idea of the paper is that this simple core is as a solid foundation for
-working with graphs. The type class has classic inhabitants, such as the pair $(V,E)$,
-data types from \textsf{containers} and \textsf{fgl}, as well as new, unknown forms
-of life. Our contributions are:
+The type class has usual inhabitants, such as the pair $(V,E)$, data types from
+\textsf{containers} and \textsf{fgl}, and other, stranger forms of life.
+The main goal of the paper is to demonstrate that \emph{this core is a solid
+foundation for working with graphs}. Our specific contributions are:
 \begin{itemize}
   \item Compared to existing libraries, algebraic graphs have a smaller
   core (just four graph construction primitives), are more compositional
