@@ -29,8 +29,9 @@ important advantage of \textsf{fgl} is the support of edge-labelled graphs.
 
 Several other authors investigated ways to define graphs compositionally,
 e.g.~\citet{1995_gibbons_algebra} proposed an algebraic framework for modelling
-acyclic graphs comprising 6 core graph construction primitives, but the approach
-was not general enough to handle other practically useful classes of graphs.
+\emph{directed acyclic graphs} comprising 6 core graph construction primitives,
+but the approach was not general enough to handle other practically useful classes
+of graphs.
 
 Gibbon's algebra is an example of a large body of research on \emph{categorical
 graph algebras}, e.g. see a survey by~\citet{2010_selinger_survey}. These algebras
@@ -54,25 +55,25 @@ typically use matrix-based data structures for manipulating connectivity and dis
 information with the goal of solving optimisation problems on graphs, and are not
 suitable as an abstract interface for graph representation.
 
-Simple graph construction cores exist for special families of graphs. For example,
+Simple graph construction cores are known for special families of graphs. For example,
 non-empty \emph{series-parallel graphs} require only three primitives: a single vertex,
 and series and parallel composition operations. A classical result~\cite{1979_valdes_sp}
 states that only \emph{$N$-free graphs} can be constructed using these primitives.
 Similarly, the family of \emph{cographs} corresponds to \emph{$P_4$-free graphs}, which
 also require only three graph construction primitives: a single vertex, graph complement,
 and disjoint graph union~\cite{1981_corneil_cographs}. Interestingly, there is an
-alternative core: a single vertex, disjoint graph union, and disjoint graph join. The
-only difference from the core used in this paper is the disjointness requirement. By
-dropping this requirement, we can construct arbitrary graphs. In particular, both
+alternative core for cographs: a single vertex, disjoint graph union, and disjoint graph
+join. The only difference from the core used in this paper is the disjointness requirement.
+By dropping this requirement, we can construct arbitrary graphs. In particular, both
 $N = 1 \rightarrow 2 + 3 \rightarrow (2 + 4)$ and
 $P_4 = 1 \rightarrow 2 + 2 \rightarrow 3 + 3 \rightarrow 4$ can be easily constructed.
 
 This paper builds on the work by~\citet{2014_algebra_mokhov}, where
 the \emph{algebra of parameterised graphs}, a mathematical
 structure very similar to a semiring, was proposed as a complete and sound formalism
-for graph representation in the context of digital circuit design. The authors did
-not investigate applications of the algebra in functional programming but proved
-many important results that are essential for this paper.
+for graph representation in the context of digital circuit design. In that paper the
+authors did not investigate applications of the algebra in functional programming but
+proved many important results that are essential for this work.
 \citet{2014_alekseyev_phd} derived a formalisation of the algebra of parameterised
 graphs in Agda, using an encoding similar to the core type class that we define.
 

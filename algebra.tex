@@ -32,7 +32,7 @@ See~\citet{1999_semirings_golan} for a classic overview of semiring
 applications, where the author hints at the existence of a non-semiring `algebra of
 digraphs' whose operations coincide with overlay and connect, referring to an unpublished
 paper by Anthony P. Stone. \citet{2013_semirings_dolan} uses the semiring theory to
-implement graph algorithms.}.
+implement graph algorithms in Haskell.}.
 This provides a convenient framework for proving graph properties, such as
 those listed above, using equational reasoning. The presented characterisation is
 generally useful for formal verification, as well as automated testing of graph library
@@ -55,8 +55,9 @@ respectively. Furthermore, we can verify the following:
 
 \noindent
 The above looks remarkably close to a semiring, with the only oddity being the shared
-identity of the two operations. The lack of annihilating zero element and the
-following \emph{decomposition} law is what makes the algebra of graphs different:
+identity of the two operations. The lack of the annihilating zero element (i.e.
+$x \rightarrow 0 = 0$) and the following \emph{decomposition law} is what makes the algebra
+of graphs different:
 \[
 x \rightarrow y \rightarrow z = x \rightarrow y + x \rightarrow z + y \rightarrow z.
 \]
@@ -64,7 +65,7 @@ x \rightarrow y \rightarrow z = x \rightarrow y + x \rightarrow z + y \rightarro
 \noindent
 Fig.~\ref{fig-axioms}(b) illustrates the law by showing that the triangle
 graph can be obtained in two different ways: by connecting the three vertices
-of the triangle or by constructing its edges separately and overlaying them.
+of the triangle and by constructing its edges separately and overlaying them.
 
 Interestingly, the fact that overlay and connect share the same identity
 follows from the decomposition law. Indeed, let $\varepsilon_{+}$ and
@@ -80,9 +81,11 @@ respectively. Then:
 \]
 
 \noindent
-Furthermore, the idempotence of $+$ can also be proved from the decomposition, which
-leads to the following \emph{minimal set of axioms that characterise algebraic graphs}.
+Furthermore, the identity ($x + \varepsilon = x$) and idempotence ($x + x = x$) can be proved
+from the decomposition law, which leads to the following \emph{minimal set of axioms that
+characterise algebraic graphs}.
 
+Algebraic graphs are characterised by the following 8 axioms:
 \begin{itemize}
     \item $+$ is commutative and associative, i.e. $x + y = y + x$ and
     $x + (y + z) = (x + y) + z$.
@@ -96,13 +99,11 @@ leads to the following \emph{minimal set of axioms that characterise algebraic g
     x \rightarrow y + x \rightarrow z + y \rightarrow z$.
 \end{itemize}
 
-We require all \hs{Graph} instances to satisfy these 8 axioms. Our definition
-of graph construction primitives in~\S\ref{sub-constructing} does satisfy them
-all and is therefore a valid \hs{Graph} instance. We will provide an
+Our definition of graph construction primitives in~\S\ref{sub-constructing} satisfies
+these axioms and is therefore a valid \hs{Graph} instance. We provide an
 implementation for this and other useful instances in~\S\ref{sec-a-la-carte}.
-Some of them will satisfy additional
-axioms; for example, by making the connect operation commutative,
-we obtain undirected graphs.
+Some of them will satisfy additional axioms; for example, by making the connect
+operation commutative, we obtain undirected graphs.
 
 Algebraic graphs are \emph{complete} in the sense that it is possible to describe
 any graph using the core interface. Indeed, given a graph $(V,E)$ we can construct
@@ -156,6 +157,7 @@ the algebra of parameterised graphs that we build on.
  & = & \hs{clique (h:t)} & \text{(definition of \hs{clique})}\\
 \end{array}
 \]
+\vspace{-2mm}
 \caption{Equational reasoning with algebraic graphs.\label{fig-proof}}
 \end{figure*}
 
@@ -228,101 +230,6 @@ If $\hs{@\blk{xs}@}$ is non-empty, i.e. $\hs{@\blk{xs}@}\ =\ \hs{@\blk{h}@:t}$,
 we make the inductive hypothesis that
 \hs{vertices t} $\ \subseteq\ $ \hs{clique t} and proceed as shown in Fig.~\ref{fig-proof}.
 
-% \begin{figure}[b]
-% \vspace{-2mm}
-% \begin{subfigure}[b]{0.48\linewidth}
-% \begin{minted}{haskell}
-% gen ::@\,@(Graph g,@\,@Arbitrary@\,@(Vertex g)) => Gen g
-% gen = sized expr
-%   where
-%     expr 0 = @\std{return}@ empty
-%     expr 1 = @\std{fmap}@ vertex arbitrary
-%     expr n = do
-%         sizeLeft <- choose (0, n)
-%         l <- expr sizeLeft
-%         r <- expr (n - sizeLeft)
-%         elements [ overlay l r, connect l r ]
-
-% instance Arbitrary a => Arbitrary@\,@(Expr@\,@a) where
-%     arbitrary = gen
-
-%     shrink Empty = []
-%     ...
-% \end{minted}
-% \caption{Generating arbitrary algebraic graphs}
-% \end{subfigure}
-% \hfill
-% \hfill
-% \hfill
-% \vrule
-% \hfill
-% \begin{subfigure}[b]{0.45\linewidth}
-% \begin{minted}{haskell}
-% (+) = overlay -- convenient shortcuts
-% (*) = connect
-
-% type GraphTestsuite g = (Eq g, Graph g)
-%   => g -> g -> g -> Property
-
-% axioms :: GraphTestsuite g
-% axioms x y z = conjoin
-%   [       x + y == y + x
-%   , x + (y + z) == (x + y) + z
-%   ,   empty * x == x
-%   ,   x * empty == x
-%   , x * (y * z) == (x * y) * z
-%   , x * (y + z) == x * y + x * z
-%   , (x + y) * z == x * z + y * z
-%   ,   x * y * z == x * y + x * z + y * z ]
-% \end{minted}
-% \caption{Testsuite for the minimal set of axioms}
-% \end{subfigure}
-% \vspace{-3mm}
-% \caption{Automated testing infrastructure for algebraic graphs\label{fig-testing}}
-% \end{figure}
-
-% \subsection{Automated testing}\label{sub-testing}
-
-% Theorem provers, such as Agda~\cite{2007_norell_agda},
-% can substantially reduce the effort required for formal verification,
-% however, automated testing remains an effective and pervasively used
-% method for formulating and testing functional properties. In Haskell,
-% the go-to tool for automated testing is QuickCheck developed
-% by~\citet{2011_quickcheck_claessen}.
-% Fig.~\ref{fig-testing} shows a reusable testing infrastructure for
-% algebraic graphs. The function~\hs{gen} in Fig.~\ref{fig-testing}(a)
-% allows to generate arbitrary graph expressions of specified size.
-% It is polymorphic and can therefore be used as a default implementation
-% of QuickCheck's \hs{Arbitrary} type class, as shown by a sketch of
-% the \hs{Arbitrary@\,\,@(Expr@\,\,\blk{a}@)} instance definition, where \hs{Expr}
-% is a \hs{Graph} instance defined in the next section~\S\ref{sec-a-la-carte}.
-
-% Fig.~\ref{fig-testing}(b) shows an implementation of the \hs{axioms}
-% testsuite that can be used for testing a \hs{Graph} instance against
-% the minimal set of axioms defined in~\S\ref{sub-laws}.
-% For example, let's do a quick check of \hs{Expr@\,@Int} in the interactive GHC:
-
-% \begin{minted}[frame=single]{haskell}
-% @\ghci @quickCheck (axioms :: GraphTestsuite (Expr Int))
-% @\blk{+++ OK, passed 100 tests.}@
-% \end{minted}
-
-% \noindent
-% Here QuickCheck generates 100 random test cases $(x,y,z)$ using the \hs{gen}
-% function and checks that \hs{axioms@\,$x\,y\,z$@} holds in each case. Note
-% that we have to tell QuickCheck which specific \hs{Graph} instance to test
-% by providing a type signature for the polymorphic \hs{axioms} testsuite.
-
-% Finally, let's use QuickCheck to test the property
-% \hs{clique (xs ++ ys)} $\ =\ $ \hs{connect (}\hs{clique xs) (}\hs{clique ys)},
-% which we contemplated in the beginning of this section:
-
-% \begin{minted}[frame=single]{haskell}
-% @\ghci @quickCheck $ \xs ys -> clique@\,@(xs ++ ys) == connect@\,@(clique xs) (clique ys :: Epxr Int)
-% @\blk{+++ OK, passed 100 tests.}@
-% \end{minted}
-
-% \noindent
 All properties and theorems that we discuss in this paper have been
 formally proved in Agda\footnote{The proofs are available at
 \url{https://github.com/snowleopard/alga-theory}.}.

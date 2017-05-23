@@ -78,7 +78,7 @@ path xs  = edges $ @\std{zip}@ xs (@\std{tail}@ xs)
 Note that the case with a single vertex on the path requires a special treatment.
 
 If we connect the last vertex of a path to the first one, we get a \emph{circuit}
-graph, or a \emph{cycle}. Let's express this in terms of the \hs{path} function:
+graph, or a \emph{cycle}. Let us express this in terms of the \hs{path} function:
 
 \begin{minted}{haskell}
 circuit :: Graph g => [Vertex g] -> g
@@ -519,7 +519,7 @@ of the solution:
     \hs{Right} vertices acting as temporary placeholders.
     \item We replace a vertex \hs{Left@\,$s$@} with a subgraph of two vertices
     $\{0s, 1s\}$, i.e. the vertices whose suffix is $s$. Symmetrically,
-    \hs{Right@\,$s$@} is replaced by a vertices $\{s0, s1\}$. This is captured
+    \hs{Right@\,$s$@} is replaced by vertices $\{s0, s1\}$. This is captured
     by the function \hs{expand}.
     \item The result is obtained by computing \hs{bind} \hs{skeleton} \hs{expand}.
 \end{itemize}
@@ -538,42 +538,25 @@ True
 
 @\ghci@ Set.size $ domain g
 19683 -- i.e. 3^9
+
+@\ghci@ Set.size $ relation g
+59049 -- i.e. 3^10
 \end{minted}
 
 \noindent
 Note that a De Bruijn graph of dimension \hs{len} on the \hs{alphabet} has
-$|\hs{alphabet}|^{\hs{len}}$ vertices.
+$|\hs{alphabet}|^{\hs{len}}$ vertices and $|\hs{alphabet}|^{\hs{len} + 1}$
+edges.
 
 \subsection{Summary}\label{sub-library-summary}
 
 We have presented a library of polymorphic graph construction and
-transformation functions that
-provide a flexible and elegant way to manipulate graph expressions
-polymorphically, before eventually interpreting them using one of the \hs{Graph}
-instances defined in~\S\ref{sec-a-la-carte}. See the library API in
-Fig.~\ref{fig-api}.
-
-% The implementation is written in the vanilla functional programming style
-% and, for the most part, should be easy to follow and build on by others.
-% The library can handle graphs
-% comprising millions of vertices and billions of edges in the matter of
-% seconds, which is not earth-shattering but is sufficiently fast for many applications.
-% The most efficient \hs{Graph} instance that we developed is \hs{IntAdjacencyMap}.
-% It is defined as in Fig.~\ref{fig-adjacency-map} but uses specialised
-% \hs{IntMap} and \hs{IntSet} data structures and therefore
-% only supports graphs with \hs{Int} vertices. We benchmarked \hs{IntAdjacencyMap}
-% on the following three examples:
-
-% \begin{itemize}
-%     \item A De Bruijn graph \hs{deBruijn 1000000 "0123456789"} with
-%     $|V|=10^6$ and $|E|=10^7$ takes 3.77s.
-
-%     \item A 2D mesh \hs{box@\,@(}\hs{path [1..1000])@\,@(}\hs{path [1..1000])}
-%     with $|V|=10^6$ and $|E| \approx 2\cdot 10^6$ takes 4.24s.
-
-%     \item A clique \hs{clique [1..44722]} with $|V|=44722$ and $|E| \approx 10^9$
-%     takes 10.2s.
-% \end{itemize}
-
-% The parametric \hs{AdjacencyMap} instance is approximately 2 times slower
-% on the above examples.
+transformation functions that provide a flexible and elegant way to manipulate
+graph expressions polymorphically. Polymorphic graphs are highly reusable
+and composable, and can be interpreted using any of the \hs{Graph} instances
+defined in~\S\ref{sec-a-la-carte}, as well as other instances provided by the
+\textsf{algebraic-graphs} library that is available on Hackage.
+The library is written in the vanilla functional programming style and has
+no dependencies apart from core GHC libraries.
+Many of the presented graph transformation algorithms are expressed using familiar
+functional programming abstractions, such as functors and monads.

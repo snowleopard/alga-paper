@@ -3,7 +3,7 @@
 
 In this section we define several useful \hs{Graph} instances, and
 show that the algebra presented in the previous section~\S\ref{sec-algebra} is
-not restricted only
+not restricted
 to directed graphs, but can be extended to axiomatically represent
 undirected~(\S\ref{sub-undirected}), reflexive~(\S\ref{sub-reflexive})
 and transitive~(\S\ref{sub-transitive}) graphs, their various
@@ -83,6 +83,7 @@ can be made a \hs{Num} instance if need be, using a definition similar to the ab
 
 We can now experiment with graphs and binary relations using the interactive GHC:
 
+\vspace{1mm}
 \begin{minted}[frame=single,fontsize=\small]{haskell}
 @\ghci@ 1 * (2 + 3) :: Relation Int
 R@\,@{domain@\,@=@\,\blk{fromList}\,@[1,2,3],@\,\blk{relation}\,@=@\,\blk{fromList}\,@[(1,2),(1,3)]}
@@ -140,7 +141,7 @@ instance Ord a => Eq (Graph a) where
     x == y = fold x == (fold y :: Relation a)
 \end{minted}
 
-An interesting feature of this graph instance is that it allows to represent
+An interesting feature of this graph instance is that it allows us to represent
 densely connected graphs more compactly. For example, \hs{clique [1..n] :: Graph Int}
 has a linear-size representation in memory, while \hs{clique [1..n] :: Relation Int}
 stores each edge separately and therefore requires $O(n^2)$ memory. Exploiting the
@@ -274,7 +275,7 @@ but is an interesting direction of future research.
 
 \subsection{Undirected graphs}\label{sub-undirected}
 
-As hinted in \S\ref{sub-laws}, to switch from directed to undirected graphs it
+As hinted at in \S\ref{sub-laws}, to switch from directed to undirected graphs it
 is sufficient to add the axiom of commutativity for the connect operation. For
 undirected graphs we can denote connect by $\leftrightarrow$:
 
@@ -408,7 +409,7 @@ x\!\rightarrow\!z = x\!\rightarrow\!\varepsilon\!\rightarrow z = x\!\rightarrow\
 
 It is interesting to note that $+$ and $\rightarrow$ have simple meanings for transitive
 graphs: they correspond to the \emph{parallel} and \emph{sequential composition},
-respectively. This allows to algebraically describe concurrent systems, which was
+respectively. This allows us to algebraically describe concurrent systems, which was
 the original motivation behind the research on algebraic graphs~\cite{2014_algebra_mokhov}.
 
 We can implement transitive graphs by wrapping
