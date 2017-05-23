@@ -1,18 +1,20 @@
 %!TEX root = alga.tex
-\vspace{-1mm}
+\vspace{-2mm}
 \section{Introduction}\label{sec-intro}
 
 Graphs are ubiquitous in computing, yet working with graphs often requires
 painfully low-level fiddling with sets of vertices and edges. Building high-level
 abstractions is difficult, because the commonly used foundation -- the pair $(V, E)$
 of vertex set $V$ and edge set $E \subseteq V \times V$ -- is a source of partial
-functions. In Haskell\footnote{In this paper we exclusively use Haskell, but the
-presented approach can be adapted to other programming languages.} the pair can
-be represented by the following simple data type:
+functions. We can represent the pair by the following simple data type\footnote{Although
+in this paper we exclusively use Haskell, the problem we solve is general and the
+proposed approach can be readily adapted to other programming languages.}:
 
+\vspace{0.5mm}
 \begin{minted}{haskell}
   data G a = G { vertices :: [a], edges :: [(a,a)] }
 \end{minted}
+\vspace{0.5mm}
 
 \noindent
 Now \hs{G [1,2,3] [(1,2),(2,3)]} is the graph with three vertices $V = \{1,2,3\}$ and
@@ -22,7 +24,7 @@ invariant, and there is no easy way to reflect this in types. Perhaps, our data 
 too simplistic; let us look at state-of-the-art graph libraries instead.
 
 The \textsf{containers} library is designed for performance and powers GHC itself. It
-represents graphs by \emph{adjacency arrays}~\cite{1995_king_graphs}, which are not
+represents graphs by \emph{adjacency arrays}~\cite{1995_king_graphs} that are not
 better than our data type from the safety point of view: the \hs{buildG} graph construction
 function is partial and can fail with the \textsf{`index out of range'} error.
 Another popular library \textsf{fgl} uses the \emph{inductive graph
@@ -31,8 +33,8 @@ partial functions, e.g. \hs{insEdge} can fail with the \textsf{`edge from non-ex
 vertex'} error.
 
 Both \textsf{containers} and \textsf{fgl} are treasure troves of graph algorithms,
-but it is easy to make an error when using these libraries. Is there a safe graph
-construction interface we can build on top?
+but it is easy to make an error when using them. Is there a safe graph construction
+interface we can build on top?
 
 In this paper we present \emph{algebraic graphs} --- a new interface
 for graph construction and transformation. We abstract away from graph representation
@@ -61,8 +63,8 @@ of the two graphs, see~Fig.~\ref{fig-construction} for examples. The \emph{overl
 i) they are closed on the set of graphs, i.e. are total functions, and ii) they can be used
 to construct any graph starting from the empty and single-vertex graphs.
 For example, \hs{Connect (Vertex 1) (Vertex 2)} is the graph with two vertices $\{1,2\}$
-and a single edge $(1,2)$. Malformed graph, such as \hs{G [1] [(1,2)]}, cannot be
-expressed in the core.
+and a single edge $(1,2)$. Malformed graphs, such as \hs{G [1] [(1,2)]}, cannot be
+expressed in this core language.
 
 The main goal of this paper is to demonstrate that \emph{this core is a safe, flexible
 and elegant foundation for working with graphs}. Our specific contributions are:
@@ -72,24 +74,25 @@ and elegant foundation for working with graphs}. Our specific contributions are:
   (hence greater code reuse), and have no partial functions (hence fewer
   opportunities for usage errors). We present the core and justify these claims
   in \S\ref{sec-core}.
+  \vspace{0.5mm}
 
   \item The core has a simple mathematical structure fully characterised
   by a set of axioms~(\S\ref{sec-algebra}). This makes the
   proposed interface easier for testing and formal verification. We show that
   the core is \emph{complete}, i.e. any graph can be constructed, and \emph{sound},
   i.e. malformed graphs cannot be constructed.
+  \vspace{0.5mm}
 
   \item Under the basic set of axioms, algebraic graphs correspond to directed
   graphs with no edge labels. As we show in~\S\ref{sec-a-la-carte}, by extending
-  the algebra
-  with additional axioms, it is possible to also represent undirected, reflexive
-  and transitive graphs, their combinations, as well as hypergraphs.
-%   Importantly, the core
-%   graph construction primitives remain unchanged, which allows to define highly
-%   reusable polymorphic functions on graphs.
+  the algebra   with additional axioms, it is possible to also represent undirected,
+  reflexive and transitive graphs, their combinations, as well as hypergraphs.
+  Importantly, the core remains unchanged, which allows us to define highly
+  reusable polymorphic functions on graphs.
+  \vspace{0.5mm}
 
-  \item We develop a Haskell library\footnote{The library is on Hackage:
-  \url{http://hackage.haskell.org/package/algebraic-graphs}.}, named \textsf{Alga},
+  \item We develop a library\footnote{The library is on Hackage:
+  \url{http://hackage.haskell.org/package/algebraic-graphs}.}
   for algebraic graph construction and transformation and demonstrate its
   flexibility in \S\ref{sec-transformations}.
   % Although the development of efficient algorithms for algebraic
@@ -99,5 +102,5 @@ and elegant foundation for working with graphs}. Our specific contributions are:
 \end{itemize}
 
 Graphs and functional programming have a long history. We review related
-work in \S\ref{sec-related}. Limitations of this work and future
+work in \S\ref{sec-related}. Limitations of presented approach and future
 research directions are discussed in \S\ref{sec-discussion}.
