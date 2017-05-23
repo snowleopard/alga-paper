@@ -1,57 +1,91 @@
 %!TEX root = alga.tex
 \section{Discussion, limitations and future research}\label{sec-discussion}
 
-The paper presented \emph{algebraic graphs} --- a new approach to representing and
-working with graphs in functional programming languages.
-Compared to the state-of-the-art, algebraic graphs are easier to use,
+The paper presented \emph{algebraic graphs} --- a new foundation for working
+with graphs, particularly well-suited for functional programming languages.
+Compared to the state-of-the-art, algebraic graphs are easier to use and reuse,
 more compositional, and have a smaller core of only four graph
 construction primitives characterised by an elegant algebra of graphs.
 
-We demonstrated the flexibility of algebraic graphs by numerous examples and
-developed a library for polymorphic graph construction and transformation.
+We demonstrated the flexibility of algebraic graphs by several examples and
+developed a Haskell library for polymorphic graph construction and transformation.
 
-The presented approach has a few limitations:
+The presented approach has a few important limitations:
 
 \begin{itemize}
+    \item This paper has not addressed edge-labelled graphs. In particular, there is
+    no known algebraic characterisation of graphs with arbitrary vertex and edge labels.
+    However,~\citet{2014_algebra_mokhov} give an algebraic characterisation for graphs
+    labelled with Boolean functions, which can be generalised to labels that form
+    a semiring.
+
+    We also observed that one can represent edge-labelled graphs by functions from labels
+    to graphs. For example, a \emph{finite automaton} can be thought of as a collection
+    of graphs, one for each symbol of the alphabet:
+
+    \vspace{2mm}
+    \begin{minted}{haskell}
+    type Automaton a s = a -> Relation s
+    \end{minted}
+    \vspace{2mm}
+
+    \noindent
+    Here \hs{a} and \hs{s} stand for the alphabet and the set of states of the
+    automaton, respectively. This representation of labelled graphs is supported
+    by the following graph instance:
+
+    \vspace{2mm}
+    \begin{minted}{haskell}
+    instance Graph g => Graph (a -> g) where
+        type Vertex (a -> g) = Vertex g
+        empty       = pure empty
+        vertex      = pure . vertex
+        overlay x y = overlay <$> x <*> y
+        connect x y = connect <$> x <*> y
+    \end{minted}
+    \vspace{2mm}
+
+    \noindent
+    Therefore, \hs{Automaton a s} is a valid \hs{Graph} instance.
+
+    \item As mentioned in~\S\ref{sec-related}, the presented approach is designed
+    for homogeneous graphs, where an edge is allowed between any pair of vertices.
+    It is an open research question whether it is possible to extend algebraic graphs
+    for modelling heterogeneous graphs, such as Petri nets, without sacrificing the
+    simplicity of the algebraic core.
+
+    \item Many graph instances, e.g. \hs{Relation}, incur a logarithmic overhead
+    during graph construction, and may therefore be unsuitable for
+    high-performance applications. One possible solution is to operate on
+    deeply-embedded algebraic graphs (such as \hs{data Graph}), and perform
+    conversions to more conventional representations only when necessary.
+
     \item There are no known efficient implementations of fundamental graph
     algorithms, such as depth-first search, that work directly on the algebraic
     core. Therefore, we need to translate core expressions to conventional
     graph representations, such as adjacency lists, and utilise existing graph
     libraries, which may be suboptimal for certain algorithmic problems.
-
-    \item Many of the presented \hs{Graph} instances incur a logarithmic overhead
-    during graph construction and therefore do not scale well. The performance
-    figures reported in~\S\ref{sub-library-summary} are not acceptable for
-    high-performance applications. A promising direction to overcoming this limitation
-    is to employ the \emph{discrimination} Haskell library that provides linear-time
-    sorting and grouping algorithms~\cite{2012_henglein_discriminations}.
-
-    \item This paper has not addressed labelled graphs. In particular, there is
-    no known algebraic characterisation of
-    graphs with arbitrary vertex and edge labels. However,~\citet{2014_algebra_mokhov}
-    give an algebraic characterisation for graphs labelled with Boolean functions.
-    % \item The graph transformation library does not provide the functionality
-    % for overriding the default implementation of functions that can be implemented
-    % more efficiently by a specific data structure. An example of a function that
-    % would particular benefit from overriding is \hs{removeEdge}, as defined
-    % in~\S\ref{sub-beyond}.
 \end{itemize}
 
 Despite these limitations, algebraic graphs have been successfully used
-in the design of asynchronous circuits~\cite{2015_beaumont_concepts} and
-processor microcontrollers~\cite{2014_algebra_mokhov}.
+in the design of processor microcontrollers~\cite{2014_algebra_mokhov} and
+asynchronous circuits~\cite{2015_beaumont_concepts}.
 
 Our future research will focus on addressing the above limitations, and on
 exploration of the following topics:
 
 \begin{itemize}
+    \item Algebraic graph expressions can be minimised via the
+    \emph{modular decomposition} of graphs~\cite{2005_mcconnell_modular}, thereby
+    reducing their memory footprint, as well as speeding up their processing.
+    Modular decomposition is a canonical graph representation, which can therefore
+    be used to efficiently compare algebraic graph expressions for equality.
+    Exploiting the compactness of algebraic graphs in algorithms is a
+    promising research direction.
     \item By using the algebraic approach to graph representation one can
     formulate graph algorithms in the form of solving systems of algebraic
     equations with unknowns.
     This may potentially open way to the discovery of novel graph algorithms.
-    \item Algebraic graph expressions can be minimised via the
-    \emph{modular decomposition} of graphs~\cite{2005_mcconnell_modular}, thereby
-    reducing their memory footprint, as well as speeding up their processing.
-    Exploiting the compactness of algebraic graphs in algorithms is a
-    promising research direction.
 \end{itemize}
+
+\newpage

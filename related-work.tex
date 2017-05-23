@@ -10,9 +10,8 @@ work with. An asymptotically optimal implementation of the depth-first search
 algorithm developed by~\citet{1995_king_graphs} used arrays to represent graphs
 and \emph{state-transformer monads}~\cite{1994_launchbury_st} to mimic imperative array
 updates in pure functional programming. The developed algorithms are still in
-use today and are available from the \textsf{containers} library shipped with the GHC.
-As demonstrated in the introduction section~\S\ref{sec-intro}, the API of
-the library is difficult to use and contains partial functions.
+use today and are available from the \textsf{containers} library shipped with GHC.
+The API of the library contains partial functions.
 
 A fundamentally different approach by~\citet{2001_erwig_inductive} is based
 on \emph{inductive graphs}, whereby a graph can be decomposed into a \emph{context}
@@ -21,15 +20,32 @@ definition makes it possible to share common subgraphs and provides a way to
 implement graph algorithms in a more functional style compared to the previous
 approaches based on array representations. Inductive graphs are implemented in
 the \textsf{fgl} library that contains implementations of many standard graph
-algorithms, from depth-first search to maximum flow on weighted graphs. Compared
-to algebraic graphs proposed in this paper, the \textsf{fgl} library has a larger
-core of graph construction primitives (10 vs 4), some of which are partial, as
-has been shown in~\S\ref{sec-intro}.
+algorithms, from depth-first search to maximum flow on weighted graphs. The library
+defines type classes \hs{Graph} and \hs{DynGraph} for working with static
+(unchangeable) and dynamic (changeable) graphs, comprising 10 class methods in total.
+Compared to algebraic graphs proposed in this paper, \textsf{fgl} has a larger
+core of graph construction primitives (10 vs 4), some of which are partial. An
+important advantage of \textsf{fgl} is the support of edge-labelled graphs.
 
 Several other authors investigated ways to define graphs compositionally,
 e.g.~\citet{1995_gibbons_algebra} proposed an algebraic framework for modelling
 acyclic graphs comprising 6 core graph construction primitives, but the approach
 was not general enough to handle other practically useful classes of graphs.
+
+Gibbon's algebra is an example of a large body of research on \emph{categorical
+graph algebras}, e.g. see a survey by~\citet{2010_selinger_survey}. These algebras
+are typically much more complex than the one presented in this paper\footnote{As an
+example, \emph{Signal Flow Graphs}~\cite{2015_bonchi_sfg} have 17 primitives
+and a few dozens of laws. Employing such heavy machinery for modelling plain directed
+graphs would be counterproductive.},
+because they can represent graphs with
+\emph{heterogeneous vertices and edges}, where not all vertices
+and edges are \emph{compatible}. Graphs in this paper are \emph{homogeneous}, i.e.
+an edge is allowed between any pair of vertices. This is a limitation for some
+applications, but it allows us to have a much simpler theory and implementation.
+\emph{Petri nets}~\cite{1989_murata_pn} is an example of graphs where not all
+edges are allowed. Algebraic graphs proposed in this paper cannot represent Petri
+nets in a safe way.
 
 From a very different angle, simple algebraic structures, such as \emph{semirings},
 have been successfully applied to solving various path problems on graphs using
@@ -38,6 +54,19 @@ typically use matrix-based data structures for manipulating connectivity and dis
 information with the goal of solving optimisation problems on graphs, and are not
 suitable as an abstract interface for graph representation.
 
+Simple graph construction cores exist for special families of graphs. For example,
+non-empty \emph{series-parallel graphs} require only three primitives: a single vertex,
+and series and parallel composition operations. A classical result~\cite{1979_valdes_sp}
+states that only \emph{$N$-free graphs} can be constructed using these primitives.
+Similarly, the family of \emph{cographs} corresponds to \emph{$P_4$-free graphs}, which
+also require only three graph construction primitives: a single vertex, graph complement,
+and disjoint graph union~\cite{1981_corneil_cographs}. Interestingly, there is an
+alternative core: a single vertex, disjoint graph union, and disjoint graph join. The
+only difference from the core used in this paper is the disjointness requirement. By
+dropping this requirement, we can construct arbitrary graphs. In particular, both
+$N = 1 \rightarrow 2 + 3 \rightarrow (2 + 4)$ and
+$P_4 = 1 \rightarrow 2 + 2 \rightarrow 3 + 3 \rightarrow 4$ can be easily constructed.
+
 This paper builds on the work by~\citet{2014_algebra_mokhov}, where
 the \emph{algebra of parameterised graphs}, a mathematical
 structure very similar to a semiring, was proposed as a complete and sound formalism
@@ -45,8 +74,7 @@ for graph representation in the context of digital circuit design. The authors d
 not investigate applications of the algebra in functional programming but proved
 many important results that are essential for this paper.
 \citet{2014_alekseyev_phd} derived a formalisation of the algebra of parameterised
-graphs in the Agda programming language, using an encoding similar to
-the core type class that we define.
+graphs in Agda, using an encoding similar to the core type class that we define.
 
 % \begin{itemize}
 %     \item Structured Graphs by Oliveira & Cook. \url{https://www.cs.utexas.edu/~wcook/Drafts/2012/graphs.pdf}

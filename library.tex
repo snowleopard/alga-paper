@@ -500,8 +500,8 @@ deBruijn len alphabet = bind skeleton expand
   where
     overlaps = @\std{mapM}@ (@\std{const}@ alphabet) [2..len]
     skeleton = edges [@\,@(Left s,@\,@Right s) | s@\,@<-@\,\blk{overlaps}\,@]
-    expand v = vertices [ @\std{either}@ ([a]++) (++[a]) v
-                        | a <- alphabet ]
+    expand v = vertices
+        [ @\std{either}@ ([a]++) (++[a]) v | a <- alphabet ]
 \end{minted}
 
 The function builds a De Bruijn graph of dimension \hs{len} from symbols of the given
