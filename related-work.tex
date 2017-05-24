@@ -45,7 +45,10 @@ and edges are \emph{compatible}. Graphs in this paper are \emph{homogeneous}, i.
 an edge is allowed between any pair of vertices. This is a limitation for some
 applications, but it allows us to have a much simpler theory and implementation.
 \emph{Petri nets}~\cite{1989_murata_pn} is an example of graphs where not all
-edges are allowed. Algebraic graphs proposed in this paper cannot represent Petri
+edges are allowed\footnote{Petri nets have vertices of two types, called \emph{places}
+and \emph{transitions}, and edges are only allowed between vertices of different
+types.}.
+Algebraic graphs proposed in this paper cannot represent Petri
 nets in a safe way.
 
 From a very different angle, simple algebraic structures, such as \emph{semirings},
