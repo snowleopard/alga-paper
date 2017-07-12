@@ -1,11 +1,3 @@
-%% For double-blind review submission
-%\documentclass[acmlarge,anonymous]{acmart}\settopmatter{printfolios=true}
-%% For single-blind review submission
-%\documentclass[acmlarge,review]{acmart}\settopmatter{printfolios=true}
-%% For final camera-ready submission
-%\documentclass[acmlarge]{acmart}\settopmatter{}
-%% For an author version
-%\documentclass[sigplan,anonymous]{acmart}\settopmatter{}
 \documentclass[sigplan]{acmart}\settopmatter{}
 
 %% Some recommended packages.
@@ -59,60 +51,20 @@
 
 \begin{document}
 
-\title{Functional Pearl: Algebraic Graphs with Class}
-                                        %% [Short Title] is optional;
-                                        %% when present, will be used in
-                                        %% header instead of Full Title.
-%\titlenote{with title note}
-                                        %% \titlenote is optional;
-                                        %% can be repeated if necessary;
-                                        %% contents suppressed with 'anonymous'
-%\subtitle{(under review, feedback is sought)\vspace{-2.5mm}}
-                                        %% \subtitle is optional
-%\subtitlenote{with subtitle note}      %% \subtitlenote is optional;
-                                        %% can be repeated if necessary;
-                                        %% contents suppressed with 'anonymous'
+\title{Algebraic Graphs with Class\vspace{-1mm}}
+\subtitle{Functional Pearl}
 
-%% Author information
-%% Contents and number of authors suppressed with 'anonymous'.
-%% Each author should be introduced by \author, followed by
-%% \authornote (optional), \orcid (optional), \affiliation, and
-%% \email.
-%% An author may have multiple affiliations and/or emails; repeat the
-%% appropriate command.
-%% Many elements are not rendered, but should be provided for metadata
-%% extraction tools.
-
-%% Author with single affiliation.
 \author{Andrey Mokhov}
-%\authornote{with author1 note}          %% \authornote is optional;
-                                        %% can be repeated if necessary
-%\orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
 \affiliation{
-  %\position{Position1}
-  %\department{Department1}              %% \department is recommended
-  \institution{Newcastle University, UK\vspace{-1mm}}     %% \institution is required
+  \institution{Newcastle University, United Kingdom\vspace{-1mm}}
   %\streetaddress{Street1 Address1}
   %\city{Newcastle}
   %\state{State1}
   %\postcode{Post-Code1}
   %\country{United Kingdom}
 }
-\email{andrey.mokhov@ncl.ac.uk}          %% \email is recommended
+%\email{andrey.mokhov@ncl.ac.uk}
 
-%% Paper note
-%% The \thanks command may be used to create a "paper note" ---
-%% similar to a title note or an author note, but not explicitly
-%% associated with a particular element.  It will appear immediately
-%% above the permission/copyright statement.
-%\thanks{with paper note}               %% \thanks is optional
-                                        %% can be repeated if necesary
-                                        %% contents suppressed with 'anonymous'
-
-
-%% Abstract
-%% Note: \begin{abstract}...\end{abstract} environment must come
-%% before \maketitle command
 \begin{abstract}
 The paper presents a minimalistic and elegant approach to working
 with graphs in Haskell. It is built on a rigorous
@@ -149,6 +101,7 @@ and transforming polymorphic graphs.
 %% Note: \maketitle command must come after title commands, author
 %% commands, abstract environment, Computing Classification System
 %% environment and commands, and keywords command.
+
 \maketitle
 
 \input{intro}
