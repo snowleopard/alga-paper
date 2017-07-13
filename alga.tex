@@ -1,10 +1,7 @@
-\documentclass[sigplan]{acmart}\settopmatter{}
+\documentclass[sigplan]{acmart}
 
-%% Some recommended packages.
-\usepackage{booktabs}   %% For formal tables:
-                        %% http://ctan.org/pkg/booktabs
-\usepackage{subcaption} %% For complex figures with subfigures/subcaptions
-                        %% http://ctan.org/pkg/subcaption
+\usepackage{booktabs}
+\usepackage{subcaption}
 
 % Haskell code snippets and useful shortcuts
 \usepackage{minted}
@@ -16,41 +13,21 @@
 \newcommand{\std}[1]{{\color[rgb]{0,0.3,0} #1}}
 \newcommand{\blk}[1]{{\color[rgb]{0,0,0} #1}}
 
-\makeatletter\if@ACM@journal\makeatother
-%% Journal information (used by PACMPL format)
-%% Supplied to authors by publisher for camera-ready submission
-\acmJournal{PACMPL}
-\acmVolume{1}
-\acmNumber{1}
-\acmArticle{1}
-\acmYear{2017}
-\acmMonth{1}
-\acmDOI{10.1145/nnnnnnn.nnnnnnn}
-\startPage{1}
-\else\makeatother
-%% Conference information (used by SIGPLAN proceedings format)
-%% Supplied to authors by publisher for camera-ready submission
-\acmConference{Haskell Symposium}{September 2017}{Oxford, UK}
-\acmYear{2017}
-\acmISBN{978-x-xxxx-xxxx-x/YY/MM}
-\acmDOI{10.1145/nnnnnnn.nnnnnnn}
-\startPage{1}
-\fi
+\makeatletter
 
-%% Copyright information
-%% Supplied to authors (based on authors' rights management selection;
-%% see authors.acm.org) by publisher for camera-ready submission
-\setcopyright{none}             %% For review submission
-%\setcopyright{acmcopyright}
-%\setcopyright{acmlicensed}
-%\setcopyright{rightsretained}
-%\copyrightyear{2017}           %% If different from \acmYear
+\setcopyright{acmlicensed}
+\acmDOI{10.1145/3122955.3122956}
+\acmISBN{978-1-4503-5182-9/17/09}
+\acmConference[Haskell'17]{10th ACM SIGPLAN International Haskell Symposium}{September 7-8, 2017}{Oxford, UK}
+\acmYear{2017}
+\copyrightyear{2017}
+\acmPrice{15.00}
 
 \bibliographystyle{ACM-Reference-Format}
-\citestyle{acmauthoryear}   %% For author/year citations
+\citestyle{acmauthoryear}
 
 \begin{document}
-
+\settopmatter{printacmref=false}
 \title{Algebraic Graphs with Class\vspace{-1mm}}
 \subtitle{Functional Pearl}
 
@@ -94,13 +71,7 @@ and transforming polymorphic graphs.
 \end{CCSXML}
 
 \ccsdesc[500]{Mathematics of computing~Graph theory}
-%\ccsdesc[500]{Theory of computation~Functional constructs}%% End of generated code
-
-\keywords{algebra, graph theory, Haskell}
-
-%% Note: \maketitle command must come after title commands, author
-%% commands, abstract environment, Computing Classification System
-%% environment and commands, and keywords command.
+\keywords{Haskell, algebra, graph theory}
 
 \maketitle
 
@@ -113,12 +84,7 @@ and transforming polymorphic graphs.
 \input{discussion}
 
 %% Acknowledgments
-\begin{acks}                            %% acks environment is optional
-                                        %% contents suppressed with 'anonymous'
-  %% Commands \grantsponsor{<sponsorID>}{<name>}{<url>} and
-  %% \grantnum[<url>]{<sponsorID>}{<number>} should be used to
-  %% acknowledge financial support and will be used by metadata
-  %% extraction tools.
+\begin{acks}
   I would like to thank Arseniy Alekseyev and Neil Mitchell
   for numerous discussions on algebraic graphs, their advice,
   criticism and encouragement. Without their help this work would
@@ -128,22 +94,8 @@ and transforming polymorphic graphs.
   helping to substantially improve it. Last but not least, I'm very
   grateful to Victor Khomenko for his contribution to the algebra of
   parameterised graphs that forms the mathematical foundation of this work.
-
-  % This material is based upon work supported by the
-  % \grantsponsor{GS100000001}{National Science
-  %   Foundation}{http://dx.doi.org/10.13039/100000001} under Grant
-  % No.~\grantnum{GS100000001}{nnnnnnn} and Grant
-  % No.~\grantnum{GS100000001}{mmmmmmm}.  Any opinions, findings, and
-  % conclusions or recommendations expressed in this material are those
-  % of the author and do not necessarily reflect the views of the
-  % National Science Foundation.
 \end{acks}
 
 \bibliography{publications}
-
-% \appendix
-% \section{Appendix}
-
-% Text of appendix \ldots
 
 \end{document}
