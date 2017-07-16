@@ -18,16 +18,16 @@ general and the proposed approach can be readily adapted to other programming la
 \vspace{0.5mm}
 
 \noindent
-Now \hs{G [1,2,3] [(1,2),(2,3)]} is the graph with three vertices $V = \{1,2,3\}$ and
+Now \hs{G@\,\,@[1,2,3]@\,\,@[(1,2),(2,3)]} is the graph with three vertices $V = \{1,2,3\}$ and
 two edges $E = \{(1,2), (2,3)\}$. The consistency invariant $E \subseteq V \times V$ holds.
-But what is \hs{G [1] [(1,2)]}? The edge refers to the non-existent vertex $2$, breaking the
+But what is \hs{G@\,\,@[1]@\,\,@[(1,2)]}? The edge refers to the non-existent vertex $2$, breaking the
 invariant, and there is no easy way to reflect this in types. Perhaps, our data type is just
 too simplistic; let us look at state-of-the-art graph libraries instead.
 
 The \textsf{containers} library is designed for performance and powers GHC itself.
-It represents graphs by \emph{adjacency arrays}~\cite{1995_king_graphs} whose internal
+It represents graphs by \emph{adjacency arrays}~\cite{1995_king_graphs} whose
 consistency invariant is not statically checked, which can lead to runtime
-usage errors (\textsf{`index out of range'}). Another popular library \textsf{fgl} uses
+usage errors such as \textsf{`index out of range'}. Another popular library \textsf{fgl} uses
 the \emph{inductive graph representation}~\cite{2001_erwig_inductive}, but its API also
 has partial functions, e.g. inserting an edge can fail with the \textsf{`edge from
 non-existent vertex'} error.
@@ -35,8 +35,8 @@ Both \textsf{containers} and \textsf{fgl} are treasure troves of graph algorithm
 but it is easy to make an error when using them. Is there a safe graph construction
 interface we can build on top?
 
-In this paper we present \emph{algebraic graphs} --- a new interface for construction
-and transformation of graphs (more precisely, graphs with labelled vertices and unlabelled
+In this paper we present \emph{algebraic graphs} --- a new interface for constructing
+and transforming graphs (more precisely, graphs with labelled vertices and unlabelled
 edges). We abstract away from graph representation details and characterise graphs by a
 set of axioms, much like numbers are algebraically characterised by
 \emph{rings}~\cite{1999_maclane_algebra}. Our approach is based on the
@@ -62,8 +62,8 @@ of the two graphs, see~Fig.~\ref{fig-construction} for examples. The \emph{overl
 \emph{connect} operations have two important properties:
 (i) they are closed on the set of graphs, i.e. are total functions, and (ii) they can be used
 to construct any graph starting from the empty and single-vertex graphs.
-For example, \hs{Connect (Vertex 1) (Vertex 2)} is the graph with two vertices $\{1,2\}$
-and a single edge $(1,2)$. Malformed graphs, such as \hs{G [1] [(1,2)]}, cannot be
+For example, \hs{Connect@\,\,@(Vertex@\,\,@1)@\,\,@(Vertex@\,\,@2)} is the graph with two vertices $\{1,2\}$
+and a single edge $(1,2)$. Malformed graphs, such as \hs{G@\,\,@[1]@\,\,@[(1,2)]}, cannot be
 expressed in this core language.
 
 The main goal of this paper is to demonstrate that \emph{this core is a safe, flexible
