@@ -82,8 +82,8 @@ graph, or a \emph{cycle}. Let us express this in terms of the \hs{path} function
 
 \begin{minted}{haskell}
 circuit :: Graph g => [Vertex g] -> g
-circuit [@@]     = empty
-circuit (x:xs) = path $ [x] ++ xs ++ [x]
+circuit [@@] = empty
+circuit xs = path (xs ++ [head xs])
 \end{minted}
 
 A \emph{star} graph can be obtained by connecting a centre vertex to a given
@@ -112,8 +112,11 @@ definitions of the data types \hs{Tree} and \hs{Forest} from the
 \textsf{containers} library for completeness:
 
 \begin{minted}{haskell}
-data Tree a = Node@\,@{ rootLabel :: a,@\,@subForest :: Forest a }
-
+data Tree a = Node { rootLabel :: a
+                   , subForest :: Forest a }
+\end{minted}
+\vspace{-2mm}
+\begin{minted}{haskell}
 type Forest a = [Tree a]
 \end{minted}
 
