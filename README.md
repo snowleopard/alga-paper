@@ -1,6 +1,6 @@
 # Algebraic Graphs with Class
 
-Get the PDF here: https://github.com/snowleopard/alga-paper/releases/download/hs-2017/preprint.pdf.
+Get the PDF here: https://github.com/snowleopard/alga-paper/releases/download/final/algebraic-graphs.pdf.
 
 ## Abstract
 
