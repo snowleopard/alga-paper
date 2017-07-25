@@ -47,14 +47,14 @@ context of functional programming.
 Algebraic graphs have a safe and minimalistic core of four graph construction primitives,
 as captured by the following data type:
 
-\vspace{-0.59mm}
+% \vspace{-0.59mm}
 \begin{minted}{haskell}
   data Graph a = Empty
                | Vertex a
                | Overlay (Graph a) (Graph a)
                | Connect (Graph a) (Graph a)
 \end{minted}
-\vspace{-0.59mm}
+% \vspace{-0.59mm}
 
 \noindent
 Here \hs{Empty} and \hs{Vertex} construct the \emph{empty} and \emph{single-vertex} graphs,
@@ -102,7 +102,7 @@ contributions are:
   % with graphs comprising billions of edges in the matter of
   % seconds, which is sufficiently fast for many applications.
 \end{itemize}
-\vspace{-2mm}
+% \vspace{-2mm}
 
 \begin{figure*}
 \begin{subfigure}[b]{0.2\linewidth}
