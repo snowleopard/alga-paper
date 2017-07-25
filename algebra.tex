@@ -10,10 +10,11 @@
 \caption{Decomposition: $1 \rightarrow 2 \rightarrow 3 = 1 \rightarrow 2 +
 1 \rightarrow 3 + 2 \rightarrow 3$}
 \end{subfigure}
+\vspace{-1mm}
 \caption{Two axioms of the algebra of graphs.\label{fig-axioms}}
 \end{figure*}
 
-\section{Algebraic structure}\label{sec-algebra}
+\section{Algebraic Structure}\label{sec-algebra}
 
 The functions \hs{edge}, \hs{vertices} and \hs{clique} defined in the previous
 section \S\ref{sec-core} satisfy a few properties that we can intuitively write down
@@ -38,7 +39,7 @@ those listed above, using equational reasoning. The presented characterisation i
 generally useful for formal verification, as well as automated testing of graph library
 APIs.
 
-\subsection{Axiomatic characterisation}\label{sub-laws}
+\subsection{Axiomatic Characterisation}\label{sub-laws}
 
 The definitions of \hs{vertices} and \hs{clique} in \S\ref{sub-class}
 use $\varepsilon$ as the identity for both overlay $+$ and connect $\rightarrow$
@@ -161,7 +162,7 @@ who studied the more general algebra of parameterised graphs.
 \caption{Equational reasoning with algebraic graphs.\label{fig-proof}}
 \end{figure*}
 
-\subsection{Partial order on graphs}\label{sub-partial-order}
+\subsection{Partial Order on Graphs}\label{sub-partial-order}
 
 It is fairly standard to define $x \preceq y$ as $x + y = y$ for an
 idempotent operation~$+$, since it gives a partial order on the elements
@@ -206,7 +207,7 @@ The following theorems about the partial order on graphs can be proved:
 
 \end{itemize}
 
-\subsection{Equational reasoning}\label{sub-reasoning}
+\subsection{Equational Reasoning}\label{sub-reasoning}
 
 In this subsection we show how to use equational reasoning and the laws
 of the algebra to prove properties of functions on graphs.

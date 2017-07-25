@@ -1,36 +1,6 @@
 %!TEX root = alga.tex
-\begin{figure*}
-\begin{subfigure}[b]{0.2\linewidth}
-\centerline{\includegraphics[scale=0.27]{fig/ex-a.pdf}}
-\vspace{-2.4mm}
-\caption{$1 + 2$}
-\centerline{\includegraphics[scale=0.27]{fig/ex-b.pdf}}
-\vspace{-2.4mm}
-\caption{$1 \rightarrow 2$}
-\end{subfigure}
-\hspace{11mm}
-\begin{subfigure}[b]{0.17\linewidth}
-\centerline{\includegraphics[scale=0.27]{fig/ex-c.pdf}}
-\vspace{-1mm}
-\caption{$1 \rightarrow (2 + 3)$}
-\end{subfigure}
-\hspace{12mm}
-\begin{subfigure}[b]{0.15\linewidth}
-\centerline{\includegraphics[scale=0.27]{fig/ex-d.pdf}}
-\vspace{2.4mm}
-\caption{$1 \rightarrow 1$}
-\end{subfigure}
-\hspace{12mm}
-\begin{subfigure}[b]{0.2\linewidth}
-\centerline{\includegraphics[scale=0.27]{fig/ex-e-new.pdf}}
-\vspace{-1mm}
-\caption{$1 \rightarrow 2 + 2 \rightarrow 3$}
-\end{subfigure}
-\caption{Examples of graph construction. The overlay and connect operations are denoted
-by $+$ and $\rightarrow$, respectively.\label{fig-construction}}
-\end{figure*}
-
-\section{The core}\label{sec-core}
+\vspace{-0.5mm}
+\section{The Core}\label{sec-core}
 In this section we define the \emph{core} of algebraic graphs comprising
 four graph construction primitives. We describe the semantics of the primitives
 using the common representation of graphs by sets of vertices and edges, and
@@ -48,7 +18,7 @@ When one needs to guarantee the internal consistency of a data structure, the st
 solution is to define an abstract interface that encapsulates the data structure and
 provides a set of safe construction primitives. This is exactly the approach we take.
 
-\subsection{Constructing graphs}\label{sub-constructing}
+\subsection{Constructing Graphs}\label{sub-constructing}
 
 The simplest possible graph is the \emph{empty} graph. We denote it by
 $\varepsilon$, therefore $\varepsilon = (\varnothing, \varnothing)$ and
@@ -84,11 +54,10 @@ using the defined primitives:
 \begin{itemize}
   \item $1 + 2$ is the graph with two isolated vertices 1 and 2.
   \item $1 \rightarrow 2$ is the graph with an edge between vertices 1 and 2.
-  \item $1 \rightarrow (2 + 3)$ is the graph with three vertices $\{1, 2, 3\}$
-  and two edges $(1, 2)$ and $(1, 3)$.
+  \item $1 \rightarrow (2 + 3)$ comprises vertices $\{1, 2, 3\}$
+  and edges $\{(1, 2), (1, 3)\}$.
   \item $1 \rightarrow 1$ is the graph with vertex 1 and the \emph{self-loop}.
-  \item $1 \rightarrow 2 + 2 \rightarrow 3$ is the graph with three vertices $\{1, 2, 3\}$
-  and two edges $(1, 2)$ and $(2, 3)$.
+  \item $1 \rightarrow 2 + 2 \rightarrow 3$ is the \emph{path graph} on vertices $\{1, 2, 3\}$.
 \end{itemize}
 
 As shown in~\S\ref{sec-intro}, the core can be represented by a simple
@@ -97,7 +66,7 @@ To make the core more reusable, the next subsection defines the core type class 
 has the usual inhabitants, such as the pair $(V,E)$, data types from
 \textsf{containers} and \textsf{fgl}, as well as other, stranger forms of life.
 
-\subsection{Type class}\label{sub-class}
+\subsection{Type Class}\label{sub-class}
 
 We abstract the graph construction primitives defined in \S\ref{sub-constructing}
 as the type class \hs{Graph}\footnote{The name collision (\hs{data Graph}

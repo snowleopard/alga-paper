@@ -1,7 +1,7 @@
 %!TEX root = alga.tex
-%\vspace{-2mm}
+\vspace{-2mm}
 \section{Introduction}\label{sec-intro}
-%\vspace{-0.5mm}
+\vspace{-0.5mm}
 
 Graphs are ubiquitous in computing, yet working with graphs often requires
 painfully low-level fiddling with sets of vertices and edges. Building high-level
@@ -47,12 +47,14 @@ context of functional programming.
 Algebraic graphs have a safe and minimalistic core of four graph construction primitives,
 as captured by the following data type:
 
+\vspace{-0.59mm}
 \begin{minted}{haskell}
   data Graph a = Empty
                | Vertex a
                | Overlay (Graph a) (Graph a)
                | Connect (Graph a) (Graph a)
 \end{minted}
+\vspace{-0.59mm}
 
 \noindent
 Here \hs{Empty} and \hs{Vertex} construct the \emph{empty} and \emph{single-vertex} graphs,
@@ -84,22 +86,56 @@ contributions are:
   i.e. malformed graphs cannot be constructed.
 
   \item Under the basic set of axioms, algebraic graphs correspond to directed
-  graphs with no edge labels. As we show in~\S\ref{sec-a-la-carte}, by extending
-  the algebra   with additional axioms, it is possible to also represent undirected,
-  reflexive and transitive graphs, their combinations, as well as hypergraphs.
+  graphs. As we show in~\S\ref{sec-a-la-carte}, by extending
+  the algebra with additional axioms, we can represent undirected,
+  reflexive, transitive graphs, their combinations, and hypergraphs.
   Importantly, the core remains unchanged, which allows us to define highly
   reusable polymorphic functions on graphs.
 
   \item We develop a library\footnote{The library is on Hackage:
   \url{http://hackage.haskell.org/package/algebraic-graphs}.}
-  for constructing and transforming algebraic graphs and demonstrate its
-  flexibility in \S\ref{sec-transformations}.
+  for constructing and transforming algebraic graphs
+  and demonstrate its flexibility in \S\ref{sec-transformations}.
+
   % Although the development of efficient algorithms for algebraic
   % graphs is outside the scope of this paper, we show that the library can cope
   % with graphs comprising billions of edges in the matter of
   % seconds, which is sufficiently fast for many applications.
 \end{itemize}
-\vspace{-0.25mm}
+\vspace{-2mm}
+
+\begin{figure*}
+\begin{subfigure}[b]{0.2\linewidth}
+\centerline{\includegraphics[scale=0.27]{fig/ex-a.pdf}}
+\vspace{-2.4mm}
+\caption{$1 + 2$}
+\centerline{\includegraphics[scale=0.27]{fig/ex-b.pdf}}
+\vspace{-2.4mm}
+\caption{$1 \rightarrow 2$}
+\end{subfigure}
+\hspace{11mm}
+\begin{subfigure}[b]{0.17\linewidth}
+\centerline{\includegraphics[scale=0.27]{fig/ex-c.pdf}}
+\vspace{-1mm}
+\caption{$1 \rightarrow (2 + 3)$}
+\end{subfigure}
+\hspace{12mm}
+\begin{subfigure}[b]{0.15\linewidth}
+\centerline{\includegraphics[scale=0.27]{fig/ex-d.pdf}}
+\vspace{2.4mm}
+\caption{$1 \rightarrow 1$}
+\end{subfigure}
+\hspace{12mm}
+\begin{subfigure}[b]{0.2\linewidth}
+\centerline{\includegraphics[scale=0.27]{fig/ex-e-new.pdf}}
+\vspace{-1mm}
+\caption{$1 \rightarrow 2 + 2 \rightarrow 3$}
+\end{subfigure}
+\vspace{-1.5mm}
+\caption{Examples of graph construction. The overlay and connect operations are denoted
+by $+$ and $\rightarrow$, respectively.\label{fig-construction}}
+\vspace{-3mm}
+\end{figure*}
 
 Graphs and functional programming have a long history. We review related
 work in \S\ref{sec-related}. Limitations of the presented approach and future

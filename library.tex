@@ -49,7 +49,7 @@ fold   @\,\,@::@\,\,@Graph@\,\,\blk{g}@ => Graph  (Vertex g)      -> g
 \caption{API of the graph construction and transformation library.\label{fig-api}}
 \end{figure*}
 
-\section{Graph transformation library}\label{sec-transformations}
+\section{Graph Transformation Library}\label{sec-transformations}
 
 As shown in the previous section~\S\ref{sec-a-la-carte}, the world of \hs{Graph}
 instances has many inhabitants sharing a part of their `algebraic DNA'. They all
@@ -58,7 +58,7 @@ which we develop in this section. The API of the library is summarised in
 Fig.~\ref{fig-api}. The part shown in Fig.~\ref{fig-api}(a) has been defined
 in~\S\ref{sec-algebra}.
 
-\subsection{Standard families of graphs}\label{sub-families}
+\subsection{Standard Families of Graphs}\label{sub-families}
 
 This subsection defines a few simple functions for constructing graphs from
 standard graph families. See Fig.~\ref{fig-api}(b) for the list of all functions
@@ -150,7 +150,7 @@ The last property deserves a remark: the transitive closure of a path graph
 is the directed clique on the same set of vertices, therefore they are considered equal
 by the \hs{Transitive} graph instance.
 
-\subsection{Graph transpose}
+\subsection{Graph Transpose}
 
 In the rest of this section we present a toolbox for transforming polymorphic graph
 expressions. The functions in the presented toolbox are listed in Fig.~\ref{fig-api}(c).
@@ -200,7 +200,7 @@ the constructor \hs{T}, therefore the only way to call \hs{transpose} is to give
 polymorphic argument and let the type inference interpret it as a value of type
 \hs{Transpose}.
 
-\subsection{Graph functor}\label{sub-functor}
+\subsection{Graph Functor}\label{sub-functor}
 
 We now implement a function \hs{gmap} that given a function \hs{a}~\hs{->}~\hs{b}
 and a polymorphic graph whose vertices are of type \hs{a} will produce a
@@ -333,7 +333,7 @@ and we would like to avoid this in order to keep the \hs{box} type signature
 fully parametric. As a consequence, \hs{toList (1 + 1)} produces the
 list \hs{[1,1]}.
 
-\subsection{Graph monad}\label{sub-monad}
+\subsection{Graph Monad}\label{sub-monad}
 
 What do the operations of removing a vertex and splitting a vertex have in common?
 They both can be implemented by replacing each vertex of a graph with a (possibly empty)
@@ -414,7 +414,7 @@ splitVertex v vs g = bind g $
 \noindent
 Here vertex 1 is split into a pair of vertices $\{0, 1\}$ that have the same connectivity.
 
-\subsection{Beyond homomorphisms}\label{sub-beyond}
+\subsection{Beyond Homomorphisms}\label{sub-beyond}
 
 Most of the \hs{newtype} wrappers defined in this section are \emph{homomorphisms},
 that is, they preserve the structure of the original graph expression. The two
@@ -487,10 +487,12 @@ concrete \hs{Graph} instances provide much faster equivalents of \hs{removeEdge}
 
 \begin{figure*}
 \centerline{\includegraphics[scale=0.3]{fig/De-Bruijn-construction.pdf}}
+\vspace{-1mm}
 \caption{Constructing De Bruijn graphs using the graph monad.\label{fig-de-bruijn}}
+\vspace{-1mm}
 \end{figure*}
 
-\subsection{De Bruijn graphs}
+\subsection{De Bruijn Graphs}
 
 To demonstrate that one can easily construct sophisticated graphs using
 the presented library, let us try it on \emph{De Bruijn graphs}, an interesting

@@ -1,5 +1,5 @@
 %!TEX root = alga.tex
-\section{Graphs \`{a} la carte}\label{sec-a-la-carte}
+\section{Graphs \`{a} la Carte}\label{sec-a-la-carte}
 
 In this section we define several useful \hs{Graph} instances, and
 show that the algebra presented in the previous section~\S\ref{sec-algebra} is
@@ -28,14 +28,14 @@ combinations~(\S\ref{sub-preorder}), and even hypergraphs~(\S\ref{sub-hypergraph
                 connect x y = R (domain x `union` domain y) (relation x `union` relation y `union`
                     fromAscList [ (a, b) | a <- elems (domain x), b <- elems (domain y) ])
 \end{minted}
-\vspace{-2mm}
+\vspace{-2.5mm}
 \caption{Implementing the \hs{Graph} type class by a binary relation
 and the core graph construction primitives
 defined in~\S\ref{sub-constructing}.\label{fig-relation}}
-\vspace{-2mm}
+\vspace{-2.5mm}
 \end{figure*}
 
-\subsection{Binary relation}\label{sub-relation}
+\subsection{Binary Relation}\label{sub-relation}
 
 We start by a direct encoding of the graph construction primitives defined
 in~\S\ref{sub-constructing} into the abstract data type \hs{Relation} isomorphic
@@ -103,7 +103,7 @@ fromList [('a','b'),('a','c'),('b','c')]
 The last example highlights the fact that the \hs{Relation@\,\,\blk{a}@} instance allows vertices
 of any type \hs{@\blk{a}@} that satisfies the~\hs{Ord@\,\,\blk{a}@} constraint.
 
-\subsection{Deep embedding}\label{sub-embedding}
+\subsection{Deep Embedding}\label{sub-embedding}
 
 We can embed the core graph construction primitives into a simple data type
 (excuse and ignore the name clash with the type class):
@@ -273,7 +273,7 @@ but is an interesting direction of future research.
 % which motivates us to study polymorphic graph transformations that can be reused by
 % all law-abiding citizens of the \hs{Graph} world -- see \S\ref{sec-transformations}.
 
-\subsection{Undirected graphs}\label{sub-undirected}
+\subsection{Undirected Graphs}\label{sub-undirected}
 
 As hinted at in \S\ref{sub-laws}, to switch from directed to undirected graphs it
 is sufficient to add the axiom of commutativity for the connect operation. For
@@ -354,7 +354,7 @@ constraint for functions that rely on the commutativity of the \hs{connect} meth
     \label{fig-3-decomposition}}
 \end{figure*}
 
-\subsection{Reflexive graphs}\label{sub-reflexive}
+\subsection{Reflexive Graphs}\label{sub-reflexive}
 
 A graph is \emph{reflexive} if every vertex of the graph is connected to itself,
 i.e. has a self-loop. An example of a reflexive graph is the graph corresponding
@@ -382,7 +382,7 @@ We can define
 \hs{class Graph@\,\,\blk{g}@ => ReflexiveGraph@\,\,\blk{g}@}
 to increase the type safety of functions that rely on the self-loop axiom.
 
-\subsection{Transitive graphs}\label{sub-transitive}
+\subsection{Transitive Graphs}\label{sub-transitive}
 
 In many applications graphs satisfy the \emph{transitivity} property: if a vertex $x$ is
 connected to $y$, and $y$ is connected to $z$, then the edge between $x$ and $z$ can be
@@ -418,7 +418,7 @@ compares the transitive closures of the underlying relations.
 A subclass \hs{class Graph@\,\,\blk{g}@ => TransitiveGraph@\,\,\blk{g}@} can be
 defined to distinguish algebraic graphs with the closure axiom from others.
 
-\subsection{Preorders and equivalence relations}\label{sub-preorder}
+\subsection{Preorders and Equivalence Relations}\label{sub-preorder}
 
 By combining reflexive and transitive graphs, one can obtain \emph{preorders}.
 For example, $(1 + 2 + 3) \rightarrow (2 + 3 + 4)$

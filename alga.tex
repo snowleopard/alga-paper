@@ -1,5 +1,4 @@
-\documentclass[sigplan,authorversion]{acmart}
-
+\documentclass[sigplan,screen,9pt]{acmart}
 \usepackage{booktabs}
 \usepackage{subcaption}
 
@@ -15,29 +14,31 @@
 
 \makeatletter
 
+%%% The following is specific to Haskell'17 and the paper
+%%% 'Algebraic Graphs with Class (Functional Pearl)'
+%%% by Andrey Mokhov.
+%%%
 \setcopyright{acmlicensed}
+\acmPrice{15.00}
 \acmDOI{10.1145/3122955.3122956}
-\acmISBN{978-1-4503-5182-9/17/09}
-\acmConference[Haskell'17]{10th ACM SIGPLAN International Haskell Symposium}{September 7-8, 2017}{Oxford, UK}
 \acmYear{2017}
 \copyrightyear{2017}
-\acmPrice{15.00}
+\acmISBN{978-1-4503-5182-9/17/09}
+\acmConference[Haskell'17]{10th ACM SIGPLAN International Haskell Symposium}{September 7-8, 2017}{Oxford, UK}
 
 \bibliographystyle{ACM-Reference-Format}
 \citestyle{acmauthoryear}
 
 \begin{document}
-\settopmatter{printacmref=false}
-\title{Algebraic Graphs with Class\vspace{-1.5mm}}
-\subtitle{Functional Pearl}
+\title{Algebraic Graphs with Class (Functional Pearl)}
 
 \author{Andrey Mokhov}
 \affiliation{
-  \institution{Newcastle University, United Kingdom\vspace{-1mm}}
+  \institution{Newcastle University, United Kingdom}
 }
 
 \begin{abstract}
-% \vspace{-1mm}
+\vspace{-0.5mm}
 The paper presents a minimalistic and elegant approach to working
 with graphs in Haskell. It is built on a rigorous
 mathematical foundation --- an algebra of graphs --- that allows us to apply
@@ -51,7 +52,7 @@ The algebra of graphs can represent directed, undirected, reflexive
 and transitive graphs, as well as hypergraphs, by appropriately choosing
 the set of underlying axioms. The flexibility of the approach is
 demonstrated by developing a library for constructing
-and transforming polymorphic graphs.
+and transforming polymorphic graphs.\vspace{-1mm}
 \end{abstract}
 
 %% 2012 ACM Computing Classification System (CSS) concepts
@@ -59,15 +60,15 @@ and transforming polymorphic graphs.
 \begin{CCSXML}
 <ccs2012>
 <concept>
-<concept_id>10002950.10003624.10003633</concept_id>
-<concept_desc>Mathematics of computing~Graph theory</concept_desc>
+<concept_id>10002950</concept_id>
+<concept_desc>Mathematics of computing</concept_desc>
 <concept_significance>500</concept_significance>
 </concept>
+</ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{Mathematics of computing~Graph theory}
-%\keywords{\vspace{-2mm}Haskell, algebra, graph theory}
-\keywords{Haskell, algebra, graph theory}
+\ccsdesc[500]{Mathematics of computing}
+\keywords{\vspace{-2mm}Haskell, algebra, graph theory}
 
 \maketitle
 
