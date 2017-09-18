@@ -1,6 +1,8 @@
 # Algebraic Graphs with Class
 
-Get the PDF here: https://github.com/snowleopard/alga-paper/releases/download/final/algebraic-graphs.pdf.
+The paper is freely available in the ACM Digital Library: https://dl.acm.org/authorize?N46678.
+
+Alternatively, you can download the preprint from https://github.com/snowleopard/alga-paper/releases.
 
 ## Abstract
 
