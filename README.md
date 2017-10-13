@@ -4,8 +4,10 @@ The paper is freely available in the ACM Digital Library: https://dl.acm.org/aut
 
 Alternatively, you can download the preprint from https://github.com/snowleopard/alga-paper/releases.
 
-The slides of my Haskell Symposium 2017 talk are available
-[here](https://github.com/snowleopard/alga-paper/releases/download/final/algebraic-graphs-slides.pdf).
+Talks:
+* Haskell eXchange 2017 (longer and more recent): [slides](https://github.com/snowleopard/alga-paper/releases/download/final/algebraic-graphs-haskellx.pdf).
+* Haskell Symposium 2017: [slides](https://github.com/snowleopard/alga-paper/releases/download/final/algebraic-graphs-slides.pdf).
+
 
 ## Abstract
 
