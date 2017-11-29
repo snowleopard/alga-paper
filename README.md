@@ -30,4 +30,6 @@ and transforming polymorphic graphs.
 
 ## Implementation
 
-See https://github.com/snowleopard/alga for the source code and links to blog posts.
+See https://github.com/snowleopard/alga for the source code and links to blog posts. 
+
+There are also draft implementations in Scala and Agda, see https://github.com/algebraic-graphs.
