@@ -8,7 +8,8 @@ Talks:
 * Haskell eXchange 2017 (longer and more recent):
 [slides](https://github.com/snowleopard/alga-paper/releases/download/final/algebraic-graphs-haskellx.pdf),
 [video](https://skillsmatter.com/skillscasts/10635-algebraic-graphs).
-* Haskell Symposium 2017: [slides](https://github.com/snowleopard/alga-paper/releases/download/final/algebraic-graphs-slides.pdf).
+* Haskell Symposium 2017: [slides](https://github.com/snowleopard/alga-paper/releases/download/final/algebraic-graphs-slides.pdf),
+[video](https://www.youtube.com/watch?v=EdQGLewU-8k).
 
 
 ## Abstract
